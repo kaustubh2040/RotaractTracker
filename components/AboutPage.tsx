@@ -14,11 +14,12 @@ const AboutPage: React.FC = () => {
                 </div>
                 <div className="container mx-auto px-6 relative z-10 text-center">
                     <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">Official Profile</h2>
-                    <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tighter uppercase leading-none">
-                        About <span className="text-transparent bg-clip-text bg-gradient-to-tr from-teal-400 to-teal-200">Actra</span>
+                    <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-tight">
+                        About <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-tr from-teal-400 to-teal-200">Rotaract Club of RSCOE</span>
                     </h1>
-                    <p className="text-gray-400 mt-6 max-w-2xl mx-auto text-lg">
-                        {settings.appSubtitle}
+                    <p className="text-gray-400 mt-6 max-w-2xl mx-auto text-lg italic">
+                        "Service Above Self"
                     </p>
                 </div>
             </div>

@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useMemo } from 'react';
+
+import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import type { User, Activity, MemberStats } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES } from '../constants';
@@ -24,10 +25,32 @@ export const useClubData = () => {
     return useContext(ClubDataContext);
 };
 
+// Storage Keys
+const STORAGE_KEY_USERS = 'rotaract_tracker_users';
+const STORAGE_KEY_ACTIVITIES = 'rotaract_tracker_activities';
+
 export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Lazy initialization from LocalStorage
+    const [users, setUsers] = useState<User[]>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_USERS);
+        return saved ? JSON.parse(saved) : USERS;
+    });
+
+    const [activities, setActivities] = useState<Activity[]>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
+        return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES;
+    });
+
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
-    const [users, setUsers] = useState<User[]>(USERS);
+
+    // Persist data whenever it changes
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+    }, [users]);
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
+    }, [activities]);
 
     const members = useMemo(() => users.filter(u => u.role === 'member'), [users]);
 
@@ -102,7 +125,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const deleteMember = (userId: string) => {
         if (userId === 'admin' || userId === currentUser?.id) {
-            // Failsafe: prevent admin or self-deletion
             return;
         }
         setUsers(prev => prev.filter(user => user.id !== userId));

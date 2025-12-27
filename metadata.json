@@ -1,0 +1,5 @@
+{
+  "name": "Rotaract Club Activity Tracker",
+  "description": "An application for Rotaract club members to log their activities and for the president to manage, approve, and track member engagement through a ranking and zoning system.",
+  "requestFramePermissions": []
+}

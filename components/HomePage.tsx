@@ -1,9 +1,31 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useClubData } from '../hooks/useClubData';
 
 const HomePage: React.FC = () => {
     const { settings, publicEvents, setCurrentPage } = useClubData();
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [isInstallable, setIsInstallable] = useState(false);
+    
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+            setIsInstallable(true);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    }, []);
+
+    const handleInstall = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setIsInstallable(false);
+            setDeferredPrompt(null);
+        }
+    };
     
     // Most recent impact first (past events)
     const recentEvents = [...publicEvents]
@@ -31,16 +53,38 @@ const HomePage: React.FC = () => {
                         Driving <span className="text-white font-bold italic">Action</span>. Creating <span className="text-white font-bold italic">Impact</span>. 
                         Building the future with <span className="text-teal-400 font-bold">Rotaract</span>.
                     </p>
-                    <div className="mt-12 flex justify-center space-x-4">
+                    <div className="mt-12 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
                         <button 
                             onClick={() => setCurrentPage('login')}
-                            className="px-10 py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-full transition-all shadow-2xl shadow-teal-900/40"
+                            className="w-full sm:w-auto px-10 py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-full transition-all shadow-2xl shadow-teal-900/40"
                         >
                             Join the Portal
                         </button>
+                        {isInstallable && (
+                            <button 
+                                onClick={handleInstall}
+                                className="w-full sm:w-auto px-10 py-4 bg-gray-800 hover:bg-gray-700 text-teal-400 border border-teal-500/30 font-black uppercase tracking-widest rounded-full transition-all"
+                            >
+                                Install App
+                            </button>
+                        )}
                     </div>
                 </div>
             </section>
+
+            {isInstallable && (
+                <div className="bg-teal-600/10 border-y border-teal-500/20 py-4">
+                    <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between">
+                        <p className="text-sm text-teal-100 font-medium mb-4 md:mb-0">Get the best experience by installing {settings.appName} on your home screen!</p>
+                        <button 
+                            onClick={handleInstall}
+                            className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all"
+                        >
+                            Install Now
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Upcoming Section (Enhanced with Images) */}
             <section className="py-24 bg-gray-800/20 border-t border-gray-800">

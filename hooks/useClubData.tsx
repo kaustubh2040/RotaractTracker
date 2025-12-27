@@ -46,7 +46,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             
             if (isSupabaseConfigured && supabase) {
                 try {
-                    // Try to fetch users to test connection
+                    // 1. FETCH USERS
+                    // Always pull fresh from DB to prevent code updates from resetting state
                     const { data: userData, error: userError } = await supabase.from('users').select('*');
                     
                     if (userError) {
@@ -56,16 +57,20 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     setDbStatus('connected');
 
-                    // Handle Users
-                    if (userData && userData.length > 1) {
+                    let finalUsers: User[] = [];
+                    // Only seed if the database is literally empty (even no Admin)
+                    if (userData && userData.length > 0) {
+                        finalUsers = userData;
                         setUsers(userData);
                     } else {
-                        // Seed database if it only has the admin or is empty
+                        // This block only runs on the very first time the app is launched against a new DB
+                        console.log("Seeding initial users to new database...");
                         await supabase.from('users').upsert(USERS);
+                        finalUsers = USERS;
                         setUsers(USERS);
                     }
 
-                    // Handle Activities
+                    // 2. FETCH ACTIVITIES
                     const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
                     if (activityError) throw activityError;
 
@@ -81,7 +86,9 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                             status: row.status as ActivityStatus
                         }));
                         setActivities(mappedActivities);
-                    } else {
+                    } else if (userData && userData.length === 0) {
+                        // Only seed activities if it's the very first setup (0 users existed)
+                        console.log("Seeding initial activities to new database...");
                         const dbActivities = INITIAL_ACTIVITIES.map(a => ({
                             id: a.id,
                             user_id: a.userId,
@@ -94,13 +101,17 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         }));
                         await supabase.from('activities').insert(dbActivities);
                         setActivities(INITIAL_ACTIVITIES);
+                    } else {
+                        // User has cleared activities but kept members, or just hasn't added activities yet.
+                        // Do NOT re-seed dummy data here.
+                        setActivities([]);
                     }
                 } catch (e: any) {
                     console.error("Supabase connection failed:", e);
                     setDbStatus('error');
                     setDbErrorMessage(e.message || "Failed to connect to Supabase");
                     
-                    // Fallback to local
+                    // Offline Fallback
                     const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
                     const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
                     setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
@@ -118,6 +129,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadData();
     }, []);
 
+    // Sync Local Storage as a secondary backup
     useEffect(() => {
         if (users.length > 0) localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }, [users]);
@@ -151,16 +163,20 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
 
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('activities').insert([{
-                id: newActivity.id,
-                user_id: newActivity.userId,
-                user_name: newActivity.userName,
-                type: newActivity.type,
-                description: newActivity.description,
-                date: newActivity.date,
-                points: newActivity.points,
-                status: newActivity.status
-            }]);
+            try {
+                await supabase.from('activities').insert([{
+                    id: newActivity.id,
+                    user_id: newActivity.userId,
+                    user_name: newActivity.userName,
+                    type: newActivity.type,
+                    description: newActivity.description,
+                    date: newActivity.date,
+                    points: newActivity.points,
+                    status: newActivity.status
+                }]);
+            } catch (err) {
+                console.error("Failed to save activity to cloud:", err);
+            }
         }
         setActivities(prev => [...prev, newActivity]);
     };

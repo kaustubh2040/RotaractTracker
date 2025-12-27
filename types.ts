@@ -47,6 +47,17 @@ export interface Notification {
 
 export interface AppSettings {
   clubLogoUrl: string;
+  appName: string;
+  appSubtitle: string;
+}
+
+export interface PublicEvent {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    date: string;
+    isUpcoming: boolean;
 }
 
 export interface MemberStats {

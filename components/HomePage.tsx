@@ -6,13 +6,31 @@ const HomePage: React.FC = () => {
     const { settings, publicEvents, setCurrentPage } = useClubData();
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isInstallable, setIsInstallable] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
     
     useEffect(() => {
+        // Check if already installed/standalone
+        const checkStandalone = () => {
+            const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+            setIsStandalone(isStandaloneMode);
+        };
+
+        // Detect iOS
+        const checkIOS = () => {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+        };
+
+        checkStandalone();
+        checkIOS();
+
         const handleBeforeInstallPrompt = (e: any) => {
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
         };
+
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
@@ -60,33 +78,56 @@ const HomePage: React.FC = () => {
                         >
                             Join the Portal
                         </button>
-                        {isInstallable && (
-                            <button 
-                                onClick={handleInstall}
-                                className="w-full sm:w-auto px-10 py-4 bg-gray-800 hover:bg-gray-700 text-teal-400 border border-teal-500/30 font-black uppercase tracking-widest rounded-full transition-all"
-                            >
-                                Install App
-                            </button>
-                        )}
                     </div>
                 </div>
             </section>
 
-            {isInstallable && (
-                <div className="bg-teal-600/10 border-y border-teal-500/20 py-4">
-                    <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between">
-                        <p className="text-sm text-teal-100 font-medium mb-4 md:mb-0">Get the best experience by installing {settings.appName} on your home screen!</p>
-                        <button 
-                            onClick={handleInstall}
-                            className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all"
-                        >
-                            Install Now
-                        </button>
+            {/* Smart Install Hub - Only shows if NOT installed */}
+            {!isStandalone && (
+                <section className="bg-gray-800/50 border-y border-gray-700 py-12">
+                    <div className="container mx-auto px-6">
+                        <div className="max-w-4xl mx-auto bg-gray-900 rounded-[2rem] p-8 border border-teal-500/20 shadow-2xl flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
+                            <div className="flex items-center space-x-6">
+                                <div className="p-4 bg-teal-500/10 rounded-2xl border border-teal-500/30">
+                                    <svg className="w-8 h-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Experience {settings.appName} Mobile</h3>
+                                    <p className="text-sm text-gray-400 mt-1">Install the app for instant access and a smoother experience.</p>
+                                </div>
+                            </div>
+
+                            {isIOS ? (
+                                <div className="bg-teal-500/5 px-6 py-4 rounded-2xl border border-teal-500/10">
+                                    <p className="text-xs font-bold text-teal-400 uppercase tracking-widest text-center md:text-left">For iOS Users:</p>
+                                    <div className="flex items-center space-x-3 mt-2">
+                                        <div className="bg-white/10 p-1.5 rounded-lg">
+                                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12V4m0 0l3 3m-3-3L9 7" /></svg>
+                                        </div>
+                                        <p className="text-xs text-gray-300 font-medium">Tap <span className="text-white font-bold">Share</span> then <span className="text-white font-bold">"Add to Home Screen"</span></p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={handleInstall}
+                                    disabled={!isInstallable}
+                                    className={`px-10 py-4 font-black uppercase tracking-widest rounded-xl transition-all shadow-xl ${
+                                        isInstallable 
+                                        ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-teal-900/40 animate-pulse' 
+                                        : 'bg-gray-800 text-gray-500 cursor-not-allowed grayscale'
+                                    }`}
+                                >
+                                    {isInstallable ? 'Install Now' : 'App Ready'}
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </section>
             )}
 
-            {/* Upcoming Section (Enhanced with Images) */}
+            {/* Upcoming Section */}
             <section className="py-24 bg-gray-800/20 border-t border-gray-800">
                 <div className="container mx-auto px-6">
                     <div className="max-w-6xl mx-auto">
@@ -124,7 +165,7 @@ const HomePage: React.FC = () => {
                 </div>
             </section>
 
-            {/* Recent Impact (Top 4) */}
+            {/* Recent Impact Section */}
             <section className="py-24 bg-gray-900 border-t border-gray-800">
                 <div className="container mx-auto px-6">
                     <div className="flex justify-between items-end mb-12">

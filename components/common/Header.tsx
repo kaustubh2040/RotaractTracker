@@ -6,23 +6,25 @@ const Header: React.FC = () => {
     const { currentUser, logout, settings, setCurrentPage, currentPage } = useClubData();
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isInstallable, setIsInstallable] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
+        const checkStandalone = () => {
+            const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+            setIsStandalone(isStandaloneMode);
+        };
+        checkStandalone();
+
         const handleBeforeInstallPrompt = (e: any) => {
-            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
-            // Update UI notify the user they can install the PWA
             setIsInstallable(true);
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
         window.addEventListener('appinstalled', () => {
-            // Log install to analytics or update UI
-            console.log('PWA was installed');
             setIsInstallable(false);
+            setIsStandalone(true);
             setDeferredPrompt(null);
         });
 
@@ -33,14 +35,12 @@ const Header: React.FC = () => {
 
     const handleInstallClick = async () => {
         if (!deferredPrompt) return;
-        // Show the install prompt
         deferredPrompt.prompt();
-        // Wait for the user to respond to the prompt
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-        // We've used the prompt, and can't use it again, throw it away
-        setDeferredPrompt(null);
-        setIsInstallable(false);
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+            setIsInstallable(false);
+        }
     };
 
     return (
@@ -100,7 +100,7 @@ const Header: React.FC = () => {
 
                 <div className="h-8 w-px bg-gray-700 hidden sm:block"></div>
 
-                {isInstallable && (
+                {isInstallable && !isStandalone && (
                     <button
                         onClick={handleInstallClick}
                         className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all animate-pulse"

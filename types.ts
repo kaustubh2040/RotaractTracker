@@ -45,6 +45,16 @@ export interface Notification {
   read: boolean;
 }
 
+export interface Feedback {
+  id: string;
+  userId: string;
+  userName: string;
+  subject: string;
+  message: string;
+  reply?: string;
+  createdAt: string;
+}
+
 export interface AppSettings {
   clubLogoUrl: string;
   appName: string;

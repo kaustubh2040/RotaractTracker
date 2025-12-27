@@ -7,8 +7,12 @@ import Card from './common/Card';
 import { ActivityStatus } from '../types';
 
 const MemberDashboard: React.FC = () => {
-    const { currentUser, activities, memberStats, announcements, notifications } = useClubData();
-    const [activeTab, setActiveTab] = useState<'home' | 'report' | 'history' | 'stats'>('home');
+    const { currentUser, activities, memberStats, announcements, notifications, addFeedback, feedbacks } = useClubData();
+    const [activeTab, setActiveTab] = useState<'home' | 'report' | 'history' | 'stats' | 'support'>('home');
+    
+    // Feedback form state
+    const [fbSubject, setFbSubject] = useState('');
+    const [fbMessage, setFbMessage] = useState('');
 
     if (!currentUser) return null;
 
@@ -16,13 +20,24 @@ const MemberDashboard: React.FC = () => {
     const myRank = memberStats.findIndex(m => m.userId === currentUser.id) + 1;
     const myActivities = activities.filter(a => a.userId === currentUser.id).sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
     const myNotifications = notifications.filter(n => n.userId === currentUser.id);
+    const myFeedbacks = feedbacks.filter(f => f.userId === currentUser.id);
 
     const navItems = [
         { id: 'home', label: 'Dashboard', icon: <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
         { id: 'report', label: 'Report Activity', icon: <path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
         { id: 'history', label: 'My Submissions', icon: <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /> },
         { id: 'stats', label: 'Standings', icon: <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
+        { id: 'support', label: 'Support & Feedback', icon: <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /> },
     ];
+
+    const handleFeedbackSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!fbSubject || !fbMessage) return;
+        await addFeedback(fbSubject, fbMessage);
+        setFbSubject('');
+        setFbMessage('');
+        alert('Feedback submitted successfully!');
+    };
 
     return (
         <div className="flex flex-col md:flex-row min-h-[calc(100vh-8rem)]">
@@ -130,6 +145,59 @@ const MemberDashboard: React.FC = () => {
                             {myActivities.length === 0 && <p className="text-center py-12 text-gray-500 italic">No activity history.</p>}
                         </div>
                     </Card>
+                )}
+
+                {activeTab === 'support' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        <Card title="Submit Feedback or Query">
+                            <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-gray-500 mb-2">Subject</label>
+                                    <input 
+                                        type="text" 
+                                        value={fbSubject}
+                                        onChange={e => setFbSubject(e.target.value)}
+                                        placeholder="Brief topic..."
+                                        className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-gray-500 mb-2">Message</label>
+                                    <textarea 
+                                        rows={4}
+                                        value={fbMessage}
+                                        onChange={e => setFbMessage(e.target.value)}
+                                        placeholder="Describe your issue or suggestion..."
+                                        className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"
+                                    />
+                                </div>
+                                <button type="submit" className="w-full py-4 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-900/40">Send to President</button>
+                            </form>
+                        </Card>
+
+                        <Card title="My Feedback History">
+                            <div className="space-y-4">
+                                {myFeedbacks.length > 0 ? myFeedbacks.map(fb => (
+                                    <div key={fb.id} className="p-5 bg-gray-800 border border-gray-700 rounded-2xl">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h4 className="text-white font-bold">{fb.subject}</h4>
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase">{new Date(fb.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-400 italic mb-4">"{fb.message}"</p>
+                                        
+                                        {fb.reply ? (
+                                            <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+                                                <p className="text-[10px] font-black uppercase text-teal-400 mb-1">Reply from President:</p>
+                                                <p className="text-sm text-gray-300">{fb.reply}</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Awaiting response...</p>
+                                        )}
+                                    </div>
+                                )) : <p className="text-center py-6 text-gray-500 italic text-sm">You haven't submitted any feedback yet.</p>}
+                            </div>
+                        </Card>
+                    </div>
                 )}
 
                 {activeTab === 'stats' && <div className="animate-fadeIn"><Leaderboard /></div>}

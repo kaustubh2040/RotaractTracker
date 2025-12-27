@@ -5,8 +5,17 @@ import { useClubData } from '../hooks/useClubData';
 const HomePage: React.FC = () => {
     const { settings, publicEvents, setCurrentPage } = useClubData();
     
-    const recentEvents = publicEvents.filter(e => !e.isUpcoming).slice(0, 4);
-    const upcomingEvents = publicEvents.filter(e => e.isUpcoming).slice(0, 3);
+    // Most recent impact first (past events)
+    const recentEvents = [...publicEvents]
+        .filter(e => !e.isUpcoming)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4);
+
+    // Soonest upcoming first (future events)
+    const upcomingEvents = [...publicEvents]
+        .filter(e => e.isUpcoming)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 3);
 
     return (
         <div className="animate-fadeIn">

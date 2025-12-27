@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
-import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent } from '../types';
+import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
@@ -14,6 +14,7 @@ interface ClubDataContextType {
     activities: Activity[];
     announcements: Announcement[];
     notifications: Notification[];
+    feedbacks: Feedback[];
     settings: AppSettings;
     aboutContent: AboutContent;
     publicEvents: PublicEvent[];
@@ -30,6 +31,8 @@ interface ClubDataContextType {
     deleteMember: (userId: string) => Promise<void>;
     addAnnouncement: (text: string) => Promise<void>;
     sendNotification: (userId: string, text: string) => Promise<void>;
+    addFeedback: (subject: string, message: string) => Promise<void>;
+    replyToFeedback: (feedbackId: string, reply: string) => Promise<void>;
     memberStats: MemberStats[];
     loading: boolean;
     dbStatus: 'connected' | 'local' | 'error';
@@ -53,6 +56,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [activities, setActivities] = useState<Activity[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
     const [publicEvents, setPublicEvents] = useState<PublicEvent[]>([]);
     const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'Actra', appSubtitle: 'by Rotaract Club of RSCOE' });
     const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
@@ -84,6 +88,12 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: notData } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
                     if (notData) setNotifications(notData.map(n => ({ id: n.id, userId: n.user_id, text: n.text, createdAt: n.created_at, read: n.read })));
+
+                    const { data: fbData } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false });
+                    if (fbData) setFeedbacks(fbData.map(f => ({
+                        id: f.id, userId: f.user_id, userName: f.user_name, subject: f.subject,
+                        message: f.message, reply: f.reply, createdAt: f.created_at
+                    })));
 
                     const { data: settingsData } = await supabase.from('settings').select('*');
                     if (settingsData) {
@@ -146,7 +156,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 if (key === 'clubLogoUrl') dbKey = 'club_logo_url';
                 else if (key === 'appName') dbKey = 'app_name';
                 else if (key === 'appSubtitle') dbKey = 'app_subtitle';
-                
                 await supabase.from('settings').upsert({ key: dbKey, value });
             }
         }
@@ -180,7 +189,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const addActivity = async (activity: Omit<Activity, 'id' | 'status' | 'userName' | 'submittedAt'>) => {
         const user = users.find(u => u.id === activity.userId);
         if (!user) return;
-        const newAct: Activity = { ...activity, id: `act${Date.now()}`, status: ActivityStatus.PENDING, userName: user.name, submittedAt: new Date().toISOString().split('T')[0] };
+        const newAct: Activity = { ...activity, id: `act${Date.now()}`, status: ActivityStatus.PENDING, userName: user.name, submittedAt: new Date().toISOString() };
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').insert([{
                 id: newAct.id, user_id: newAct.userId, user_name: newAct.userName, type: newAct.type,
@@ -196,7 +205,10 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (!act) return;
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').update({ status }).eq('id', activityId);
-            if (status === ActivityStatus.APPROVED) await sendNotification(act.userId, `Impact Approved: +${act.points} points!`);
+            const msg = status === ActivityStatus.APPROVED 
+                ? `Your ${act.type} log was approved! +${act.points} pts added.`
+                : `Your ${act.type} log was reviewed and rejected. Contact admin for details.`;
+            await sendNotification(act.userId, msg);
         }
         setActivities(prev => prev.map(a => a.id === activityId ? { ...a, status } : a));
     };
@@ -215,6 +227,25 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             await supabase.from('notifications').insert([{ id: newNot.id, user_id: newNot.userId, text: newNot.text, created_at: newNot.createdAt, read: false }]);
         }
         setNotifications(prev => [newNot, ...prev]);
+    };
+
+    const addFeedback = async (subject: string, message: string) => {
+        if (!currentUser) return;
+        const newFb: Feedback = { id: `fb${Date.now()}`, userId: currentUser.id, userName: currentUser.name, subject, message, createdAt: new Date().toISOString() };
+        if (dbStatus === 'connected' && supabase) {
+            await supabase.from('feedbacks').insert([{ id: newFb.id, user_id: newFb.userId, user_name: newFb.userName, subject: newFb.subject, message: newFb.message, created_at: newFb.createdAt }]);
+        }
+        setFeedbacks(prev => [newFb, ...prev]);
+    };
+
+    const replyToFeedback = async (feedbackId: string, reply: string) => {
+        const fb = feedbacks.find(f => f.id === feedbackId);
+        if (!fb) return;
+        if (dbStatus === 'connected' && supabase) {
+            await supabase.from('feedbacks').update({ reply }).eq('id', feedbackId);
+            await sendNotification(fb.userId, `New reply from President regarding your feedback: "${fb.subject}"`);
+        }
+        setFeedbacks(prev => prev.map(f => f.id === feedbackId ? { ...f, reply } : f));
     };
 
     const updateMember = async (userId: string, name: string, password?: string) => {
@@ -238,23 +269,21 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const memberStats = useMemo<MemberStats[]>(() => {
         const members = users.filter(u => u.role === 'member');
         const approved = activities.filter(a => a.status === ActivityStatus.APPROVED);
-        
         const stats: MemberStats[] = members.map(m => {
             const mActs = approved.filter(a => a.userId === m.id);
             const totalPoints = mActs.reduce((s, a) => s + a.points, 0);
             return { userId: m.id, name: m.name, totalPoints, activities: mActs };
         });
-
         return stats.sort((a,b) => b.totalPoints - a.totalPoints);
     }, [activities, users]);
 
     return (
         <ClubDataContext.Provider value={{
             currentUser, login, logout, users, members: users.filter(u => u.role === 'member'), activities, 
-            announcements, notifications, settings, aboutContent, publicEvents, currentPage, setCurrentPage,
+            announcements, notifications, feedbacks, settings, aboutContent, publicEvents, currentPage, setCurrentPage,
             updateSettings, updateAboutContent, addPublicEvent, deletePublicEvent,
             addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
-            addAnnouncement, sendNotification, memberStats, loading, dbStatus
+            addAnnouncement, sendNotification, addFeedback, replyToFeedback, memberStats, loading, dbStatus
         }}>
             {children}
         </ClubDataContext.Provider>

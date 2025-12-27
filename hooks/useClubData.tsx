@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
-import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent } from '../types';
+import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
@@ -15,10 +15,12 @@ interface ClubDataContextType {
     announcements: Announcement[];
     notifications: Notification[];
     settings: AppSettings;
+    aboutContent: AboutContent;
     publicEvents: PublicEvent[];
-    currentPage: 'home' | 'login' | 'dashboard';
-    setCurrentPage: (page: 'home' | 'login' | 'dashboard') => void;
+    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard';
+    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard') => void;
     updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
+    updateAboutContent: (content: AboutContent) => Promise<void>;
     addPublicEvent: (event: Omit<PublicEvent, 'id'>) => Promise<void>;
     deletePublicEvent: (id: string) => Promise<void>;
     addActivity: (activity: Omit<Activity, 'id' | 'status' | 'userName' | 'submittedAt'>) => Promise<void>;
@@ -39,6 +41,13 @@ export const useClubData = () => useContext(ClubDataContext);
 
 const STORAGE_SESSION_KEY = 'actra_user_session';
 
+const DEFAULT_ABOUT: AboutContent = {
+    intro: 'The Rotaract Club of RSCOE is a community of young leaders dedicated to service and professional development.',
+    vision: 'To be a beacon of positive change in our local and global community.',
+    mission: 'To provide opportunities for young people to address the physical and social needs of their communities while promoting international understanding and peace.',
+    values: 'Fellowship, Service, Leadership, Integrity.'
+};
+
 export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [activities, setActivities] = useState<Activity[]>([]);
@@ -46,16 +55,15 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [publicEvents, setPublicEvents] = useState<PublicEvent[]>([]);
     const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'Actra', appSubtitle: 'by Rotaract Club of RSCOE' });
+    const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'dashboard'>('home');
+    const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard'>('home');
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
 
     useEffect(() => {
         const init = async () => {
             setLoading(true);
-            
-            // Check session
             const savedSession = localStorage.getItem(STORAGE_SESSION_KEY);
             
             if (isSupabaseConfigured && supabase) {
@@ -83,6 +91,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         settingsData.forEach(s => {
                             if (s.key === 'club_logo_url') newSettings.clubLogoUrl = s.value;
                             if (s.key === 'app_name') newSettings.appName = s.value;
+                            if (s.key === 'app_subtitle') newSettings.appSubtitle = s.value;
+                            if (s.key === 'about_content') setAboutContent(JSON.parse(s.value));
                         });
                         setSettings(newSettings);
                     }
@@ -93,15 +103,10 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     })));
 
                     setDbStatus('connected');
-
-                    // Resume session if valid
                     if (savedSession) {
                         const parsed = JSON.parse(savedSession);
                         const user = userData?.find((u: any) => u.id === parsed.id);
-                        if (user) {
-                            setCurrentUser(user);
-                            setCurrentPage('dashboard');
-                        }
+                        if (user) { setCurrentUser(user); setCurrentPage('dashboard'); }
                     }
                 } catch (e) {
                     setDbStatus('error');
@@ -137,9 +142,20 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSettings(prev => ({ ...prev, ...newSettings }));
         if (dbStatus === 'connected' && supabase) {
             for (const [key, value] of Object.entries(newSettings)) {
-                const dbKey = key === 'clubLogoUrl' ? 'club_logo_url' : key === 'appName' ? 'app_name' : key;
+                let dbKey = key;
+                if (key === 'clubLogoUrl') dbKey = 'club_logo_url';
+                else if (key === 'appName') dbKey = 'app_name';
+                else if (key === 'appSubtitle') dbKey = 'app_subtitle';
+                
                 await supabase.from('settings').upsert({ key: dbKey, value });
             }
+        }
+    };
+
+    const updateAboutContent = async (content: AboutContent) => {
+        setAboutContent(content);
+        if (dbStatus === 'connected' && supabase) {
+            await supabase.from('settings').upsert({ key: 'about_content', value: JSON.stringify(content) });
         }
     };
 
@@ -223,31 +239,20 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const members = users.filter(u => u.role === 'member');
         const approved = activities.filter(a => a.status === ActivityStatus.APPROVED);
         
-        // Dynamic classification logic per requirement
         const stats: MemberStats[] = members.map(m => {
             const mActs = approved.filter(a => a.userId === m.id);
             const totalPoints = mActs.reduce((s, a) => s + a.points, 0);
-            return { userId: m.id, name: m.name, totalPoints, activities: mActs, zone: 'red' as const };
+            return { userId: m.id, name: m.name, totalPoints, activities: mActs };
         });
 
-        const totalClubPoints = stats.reduce((s, m) => s + m.totalPoints, 0);
-
-        if (totalClubPoints > 0) {
-            stats.forEach(m => {
-                const ratio = m.totalPoints / totalClubPoints;
-                if (ratio <= 0.3) m.zone = 'red';
-                else if (ratio <= 0.7) m.zone = 'orange';
-                else m.zone = 'green';
-            });
-        }
         return stats.sort((a,b) => b.totalPoints - a.totalPoints);
     }, [activities, users]);
 
     return (
         <ClubDataContext.Provider value={{
             currentUser, login, logout, users, members: users.filter(u => u.role === 'member'), activities, 
-            announcements, notifications, settings, publicEvents, currentPage, setCurrentPage,
-            updateSettings, addPublicEvent, deletePublicEvent,
+            announcements, notifications, settings, aboutContent, publicEvents, currentPage, setCurrentPage,
+            updateSettings, updateAboutContent, addPublicEvent, deletePublicEvent,
             addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
             addAnnouncement, sendNotification, memberStats, loading, dbStatus
         }}>

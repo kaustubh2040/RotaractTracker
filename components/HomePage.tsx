@@ -33,32 +33,38 @@ const HomePage: React.FC = () => {
                 </div>
             </section>
 
-            {/* Upcoming Section */}
+            {/* Upcoming Section (Enhanced with Images) */}
             <section className="py-24 bg-gray-800/20 border-t border-gray-800">
                 <div className="container mx-auto px-6">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-16">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Next Steps</h3>
                             <h2 className="text-4xl font-black text-white uppercase tracking-tight">Upcoming Events</h2>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {upcomingEvents.length > 0 ? upcomingEvents.map(event => (
-                                <div key={event.id} className="flex items-center p-6 bg-gray-800 border border-gray-700 rounded-2xl hover:bg-gray-700/50 transition-colors">
-                                    <div className="w-20 text-center border-r border-gray-700 pr-6 mr-6">
-                                        <p className="text-2xl font-black text-teal-400">{new Date(event.date).getDate()}</p>
-                                        <p className="text-[9px] font-bold uppercase text-gray-500">{new Date(event.date).toLocaleDateString(undefined, { month: 'short' })}</p>
+                                <div key={event.id} className="group bg-gray-800 border border-gray-700 rounded-3xl overflow-hidden shadow-xl hover:border-teal-500/50 transition-all">
+                                    <div className="h-56 overflow-hidden relative">
+                                        <img 
+                                            src={event.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop'} 
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                            alt={event.title}
+                                        />
+                                        <div className="absolute top-4 left-4 bg-teal-500 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                            {new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <h4 className="text-xl font-bold text-white uppercase">{event.title}</h4>
-                                        <p className="text-sm text-gray-400 mt-1">{event.description}</p>
-                                    </div>
-                                    <div className="hidden sm:block">
-                                        <button className="px-6 py-2 bg-gray-700 text-[10px] font-black uppercase tracking-widest text-teal-400 rounded-lg border border-teal-500/20">Notify Me</button>
+                                    <div className="p-8">
+                                        <h4 className="text-xl font-black text-white uppercase tracking-tight mb-3 group-hover:text-teal-400 transition-colors">{event.title}</h4>
+                                        <p className="text-sm text-gray-400 leading-relaxed mb-6 line-clamp-3">{event.description}</p>
+                                        <button className="w-full py-3 bg-gray-700 group-hover:bg-teal-600 text-[10px] font-black uppercase tracking-widest text-teal-400 group-hover:text-white rounded-xl border border-teal-500/20 group-hover:border-transparent transition-all">
+                                            Set Reminder
+                                        </button>
                                     </div>
                                 </div>
                             )) : (
-                                <p className="text-center text-gray-600 italic py-8">No events scheduled at the moment.</p>
+                                <p className="text-center text-gray-600 italic py-8 col-span-full">No events scheduled at the moment.</p>
                             )}
                         </div>
                     </div>

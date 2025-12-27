@@ -13,14 +13,9 @@ const MemberDashboard: React.FC = () => {
     if (!currentUser) return null;
 
     const myStats = memberStats.find(m => m.userId === currentUser.id);
+    const myRank = memberStats.findIndex(m => m.userId === currentUser.id) + 1;
     const myActivities = activities.filter(a => a.userId === currentUser.id).sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
     const myNotifications = notifications.filter(n => n.userId === currentUser.id);
-
-    const zoneColorClasses = {
-        green: 'bg-green-500/20 text-green-300 border-green-500/30',
-        orange: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-        red: 'bg-red-500/20 text-red-300 border-red-500/30'
-    };
 
     const navItems = [
         { id: 'home', label: 'Dashboard', icon: <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
@@ -59,8 +54,9 @@ const MemberDashboard: React.FC = () => {
                                     <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">Total Impact</h3>
                                     <p className="text-4xl font-black text-white mt-1">{myStats?.totalPoints ?? 0} <span className="text-sm font-normal text-gray-500">Pts</span></p>
                                 </div>
-                                <div className={`px-4 py-1.5 rounded-full border text-xs font-black tracking-widest ${zoneColorClasses[myStats?.zone ?? 'red']}`}>
-                                    {myStats?.zone?.toUpperCase() ?? 'RED'} ZONE
+                                <div className="text-right">
+                                    <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">Rank</h3>
+                                    <p className="text-3xl font-black text-teal-400 mt-1">#{myRank}</p>
                                 </div>
                             </div>
 

@@ -32,17 +32,31 @@ const Header: React.FC = () => {
                 <nav className="hidden md:flex items-center space-x-6">
                     <button 
                         onClick={() => setCurrentPage('home')}
-                        className={`text-sm font-bold uppercase tracking-widest ${currentPage === 'home' ? 'text-teal-400' : 'text-gray-400 hover:text-white'} transition-colors`}
+                        className={`text-[10px] font-black uppercase tracking-[0.2em] ${currentPage === 'home' ? 'text-teal-400 border-b-2 border-teal-500 pb-1' : 'text-gray-400 hover:text-white'} transition-all`}
                     >
                         Home
                     </button>
+                    <button 
+                        onClick={() => setCurrentPage('about')}
+                        className={`text-[10px] font-black uppercase tracking-[0.2em] ${currentPage === 'about' ? 'text-teal-400 border-b-2 border-teal-500 pb-1' : 'text-gray-400 hover:text-white'} transition-all`}
+                    >
+                        About
+                    </button>
                     {currentUser && (
-                        <button 
-                            onClick={() => setCurrentPage('dashboard')}
-                            className={`text-sm font-bold uppercase tracking-widest ${currentPage === 'dashboard' ? 'text-teal-400' : 'text-gray-400 hover:text-white'} transition-colors`}
-                        >
-                            Portal
-                        </button>
+                        <>
+                            <button 
+                                onClick={() => setCurrentPage('leaderboard')}
+                                className={`text-[10px] font-black uppercase tracking-[0.2em] ${currentPage === 'leaderboard' ? 'text-teal-400 border-b-2 border-teal-500 pb-1' : 'text-gray-400 hover:text-white'} transition-all`}
+                            >
+                                Leaderboard
+                            </button>
+                            <button 
+                                onClick={() => setCurrentPage('dashboard')}
+                                className={`text-[10px] font-black uppercase tracking-[0.2em] ${currentPage === 'dashboard' ? 'text-teal-400 border-b-2 border-teal-500 pb-1' : 'text-gray-400 hover:text-white'} transition-all`}
+                            >
+                                Portal
+                            </button>
+                        </>
                     )}
                 </nav>
 

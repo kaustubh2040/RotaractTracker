@@ -6,6 +6,8 @@ import Header from './components/common/Header';
 import { ClubDataProvider, ClubDataContext } from './hooks/useClubData';
 import LoginScreen from './components/LoginScreen';
 import HomePage from './components/HomePage';
+import AboutPage from './components/AboutPage';
+import LeaderboardPage from './components/LeaderboardPage';
 
 const AppContent: React.FC = () => {
     const { currentUser, loading, currentPage } = React.useContext(ClubDataContext);
@@ -23,6 +25,11 @@ const AppContent: React.FC = () => {
         switch (currentPage) {
             case 'login':
                 return <LoginScreen />;
+            case 'about':
+                return <AboutPage />;
+            case 'leaderboard':
+                if (!currentUser) return <LoginScreen />;
+                return <LeaderboardPage />;
             case 'dashboard':
                 if (!currentUser) return <LoginScreen />;
                 return currentUser.role === 'admin' ? <AdminDashboard /> : <MemberDashboard />;
@@ -35,7 +42,7 @@ const AppContent: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-900">
             <Header />
-            <main className={currentPage !== 'home' ? 'p-4 sm:p-6 lg:p-12' : ''}>
+            <main className={currentPage !== 'home' && currentPage !== 'about' && currentPage !== 'leaderboard' ? 'p-4 sm:p-6 lg:p-12' : ''}>
                 {renderPage()}
             </main>
         </div>

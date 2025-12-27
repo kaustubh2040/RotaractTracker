@@ -51,6 +51,13 @@ export interface AppSettings {
   appSubtitle: string;
 }
 
+export interface AboutContent {
+  intro: string;
+  vision: string;
+  mission: string;
+  values: string;
+}
+
 export interface PublicEvent {
     id: string;
     title: string;
@@ -65,5 +72,4 @@ export interface MemberStats {
     name: string;
     totalPoints: number;
     activities: Activity[];
-    zone: 'green' | 'orange' | 'red';
 }

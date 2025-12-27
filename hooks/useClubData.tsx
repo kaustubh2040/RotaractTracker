@@ -196,6 +196,11 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 description: newAct.description, date: newAct.date, submitted_at: newAct.submittedAt,
                 points: newAct.points, status: newAct.status
             }]);
+            // Notify Admin of new activity
+            const admins = users.filter(u => u.role === 'admin');
+            for (const admin of admins) {
+                await sendNotification(admin.id, `New activity reported by ${user.name}: ${activity.type}`);
+            }
         }
         setActivities(prev => [...prev, newAct]);
     };
@@ -206,8 +211,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').update({ status }).eq('id', activityId);
             const msg = status === ActivityStatus.APPROVED 
-                ? `Your ${act.type} log was approved! +${act.points} pts added.`
-                : `Your ${act.type} log was reviewed and rejected. Contact admin for details.`;
+                ? `Log approved: +${act.points} points for ${act.type}.`
+                : `Log rejected: ${act.type}. Contact President for clarification.`;
             await sendNotification(act.userId, msg);
         }
         setActivities(prev => prev.map(a => a.id === activityId ? { ...a, status } : a));
@@ -234,6 +239,11 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const newFb: Feedback = { id: `fb${Date.now()}`, userId: currentUser.id, userName: currentUser.name, subject, message, createdAt: new Date().toISOString() };
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('feedbacks').insert([{ id: newFb.id, user_id: newFb.userId, user_name: newFb.userName, subject: newFb.subject, message: newFb.message, created_at: newFb.createdAt }]);
+            // Notify Admin of new feedback
+            const admins = users.filter(u => u.role === 'admin');
+            for (const admin of admins) {
+                await sendNotification(admin.id, `New feedback from ${currentUser.name}: ${subject}`);
+            }
         }
         setFeedbacks(prev => [newFb, ...prev]);
     };
@@ -243,7 +253,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (!fb) return;
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('feedbacks').update({ reply }).eq('id', feedbackId);
-            await sendNotification(fb.userId, `New reply from President regarding your feedback: "${fb.subject}"`);
+            await sendNotification(fb.userId, `Reply received from President on your feedback: "${fb.subject}"`);
         }
         setFeedbacks(prev => prev.map(f => f.id === feedbackId ? { ...f, reply } : f));
     };

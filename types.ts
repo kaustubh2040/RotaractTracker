@@ -1,7 +1,7 @@
+
 export enum ActivityType {
   EVENT_ATTENDANCE = 'Event Attendance',
   MEETING_ATTENDANCE = 'Meeting Attendance',
-  ACTIVITY_PARTICIPATION = 'Activity Participation',
   EVENT_HOSTING = 'Event Hosting',
 }
 

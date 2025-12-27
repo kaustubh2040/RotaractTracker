@@ -36,25 +36,33 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Initial Fetch
+    // Initial Fetch from Supabase
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
+            
             if (isSupabaseConfigured && supabase) {
                 try {
-                    const { data: userData } = await supabase.from('users').select('*');
-                    const { data: activityData } = await supabase.from('activities').select('*');
-                    
-                    if (userData && userData.length > 0) {
+                    // 1. Fetch Users
+                    const { data: userData, error: userError } = await supabase.from('users').select('*');
+                    if (userError) throw userError;
+
+                    if (userData && userData.length > 1) {
+                        // DB has users, use them
                         setUsers(userData);
                     } else {
-                        // Seed Supabase if empty
-                        await supabase.from('users').insert(USERS);
+                        // DB is empty or only has the SQL-inserted admin
+                        // Seed the full USERS list (includes Admin and default members)
+                        // Use upsert to avoid duplicate key errors for the admin
+                        await supabase.from('users').upsert(USERS);
                         setUsers(USERS);
                     }
 
+                    // 2. Fetch Activities
+                    const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
+                    if (activityError) throw activityError;
+
                     if (activityData && activityData.length > 0) {
-                        // Map snake_case from DB back to camelCase for the app
                         const mappedActivities: Activity[] = activityData.map((row: any) => ({
                             id: row.id,
                             userId: row.user_id,
@@ -67,7 +75,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         }));
                         setActivities(mappedActivities);
                     } else {
-                        // Seed activities if empty
+                        // Seed activities if DB table is empty
                         const dbActivities = INITIAL_ACTIVITIES.map(a => ({
                             id: a.id,
                             user_id: a.userId,
@@ -82,14 +90,14 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         setActivities(INITIAL_ACTIVITIES);
                     }
                 } catch (e) {
-                    console.error("Supabase fetch failed, using local", e);
+                    console.error("Supabase sync failed. Reverting to local storage.", e);
                     const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
                     const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
                     setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
                     setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
                 }
             } else {
-                // LocalStorage Fallback if no Supabase configured
+                // LocalStorage Fallback if no Supabase keys provided
                 const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
                 const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
                 setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
@@ -100,7 +108,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadData();
     }, []);
 
-    // Local Storage persistence as secondary backup
+    // Local Storage backup for offline resilience
     useEffect(() => {
         if (users.length > 0) localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }, [users]);
@@ -134,7 +142,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
 
         if (isSupabaseConfigured && supabase) {
-            // Map to snake_case for Supabase
             await supabase.from('activities').insert([{
                 id: newActivity.id,
                 user_id: newActivity.userId,
@@ -162,7 +169,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         if (isSupabaseConfigured && supabase) {
             await supabase.from('users').update(updates).eq('id', userId);
-            // Also update names in activities table for consistency in Supabase
             await supabase.from('activities').update({ user_name: name }).eq('user_id', userId);
         }
 
@@ -186,8 +192,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (userId === 'admin' || userId === currentUser?.id) return;
         
         if (isSupabaseConfigured && supabase) {
-            await supabase.from('users').delete().eq('id', userId);
             await supabase.from('activities').delete().eq('user_id', userId);
+            await supabase.from('users').delete().eq('id', userId);
         }
         
         setUsers(prev => prev.filter(u => u.id !== userId));
@@ -204,7 +210,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 name: member.name,
                 totalPoints,
                 activities: memberActivities,
-                zone: 'red',
+                zone: 'red' as const,
             };
         });
 
@@ -213,6 +219,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (maxPoints > 0) {
                 const p = (m.totalPoints / maxPoints) * 100;
                 m.zone = p >= 70 ? 'green' : (p >= 30 ? 'yellow' : 'red');
+            } else {
+                m.zone = 'red';
             }
         });
 

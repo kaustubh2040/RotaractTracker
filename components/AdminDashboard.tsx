@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PendingApprovals from './PendingApprovals';
 import Leaderboard from './Leaderboard';
@@ -8,7 +9,7 @@ import { ActivityType } from '../types';
 import MemberManagement from './MemberManagement';
 
 const AdminDashboard: React.FC = () => {
-    const { memberStats, activities } = useClubData();
+    const { memberStats, activities, dbStatus, dbErrorMessage } = useClubData();
     
     const chartData = Object.values(ActivityType).map(type => ({
         name: type,
@@ -17,6 +18,29 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* Database Status Indicator */}
+            <div className="flex justify-end">
+                {dbStatus === 'connected' ? (
+                    <div className="flex items-center bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                        <span className="text-xs text-green-400 font-medium italic">Cloud Database Connected</span>
+                    </div>
+                ) : dbStatus === 'error' ? (
+                    <div className="flex flex-col items-end">
+                        <div className="flex items-center bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full">
+                            <span className="w-2 h-2 bg-rose-500 rounded-full mr-2 animate-pulse"></span>
+                            <span className="text-xs text-rose-400 font-medium italic">Sync Error: Using Local Storage</span>
+                        </div>
+                        {dbErrorMessage && <span className="text-[10px] text-rose-500 mt-1 max-w-xs text-right">{dbErrorMessage}</span>}
+                    </div>
+                ) : (
+                    <div className="flex items-center bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full">
+                        <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                        <span className="text-xs text-yellow-400 font-medium italic">Local Storage Only (No Cloud Setup)</span>
+                    </div>
+                )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1 bg-gray-800 p-6 rounded-xl shadow-xl flex flex-col justify-center items-center">
                     <h3 className="text-lg font-semibold text-gray-400">Total Members</h3>

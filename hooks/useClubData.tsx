@@ -19,6 +19,8 @@ interface ClubDataContextType {
     deleteMember: (userId: string) => Promise<void>;
     memberStats: MemberStats[];
     loading: boolean;
+    dbStatus: 'connected' | 'local' | 'error';
+    dbErrorMessage?: string;
 }
 
 export const ClubDataContext = createContext<ClubDataContextType>({} as ClubDataContextType);
@@ -35,30 +37,35 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [activities, setActivities] = useState<Activity[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
+    const [dbErrorMessage, setDbErrorMessage] = useState<string>();
 
-    // Initial Fetch from Supabase
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
             
             if (isSupabaseConfigured && supabase) {
                 try {
-                    // 1. Fetch Users
+                    // Try to fetch users to test connection
                     const { data: userData, error: userError } = await supabase.from('users').select('*');
-                    if (userError) throw userError;
+                    
+                    if (userError) {
+                        console.error("Supabase Error:", userError);
+                        throw new Error(`Supabase error: ${userError.message}`);
+                    }
 
+                    setDbStatus('connected');
+
+                    // Handle Users
                     if (userData && userData.length > 1) {
-                        // DB has users, use them
                         setUsers(userData);
                     } else {
-                        // DB is empty or only has the SQL-inserted admin
-                        // Seed the full USERS list (includes Admin and default members)
-                        // Use upsert to avoid duplicate key errors for the admin
+                        // Seed database if it only has the admin or is empty
                         await supabase.from('users').upsert(USERS);
                         setUsers(USERS);
                     }
 
-                    // 2. Fetch Activities
+                    // Handle Activities
                     const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
                     if (activityError) throw activityError;
 
@@ -75,7 +82,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         }));
                         setActivities(mappedActivities);
                     } else {
-                        // Seed activities if DB table is empty
                         const dbActivities = INITIAL_ACTIVITIES.map(a => ({
                             id: a.id,
                             user_id: a.userId,
@@ -89,15 +95,19 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         await supabase.from('activities').insert(dbActivities);
                         setActivities(INITIAL_ACTIVITIES);
                     }
-                } catch (e) {
-                    console.error("Supabase sync failed. Reverting to local storage.", e);
+                } catch (e: any) {
+                    console.error("Supabase connection failed:", e);
+                    setDbStatus('error');
+                    setDbErrorMessage(e.message || "Failed to connect to Supabase");
+                    
+                    // Fallback to local
                     const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
                     const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
                     setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
                     setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
                 }
             } else {
-                // LocalStorage Fallback if no Supabase keys provided
+                setDbStatus('local');
                 const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
                 const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
                 setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
@@ -108,7 +118,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadData();
     }, []);
 
-    // Local Storage backup for offline resilience
     useEffect(() => {
         if (users.length > 0) localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }, [users]);
@@ -141,7 +150,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             userName: user.name,
         };
 
-        if (isSupabaseConfigured && supabase) {
+        if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').insert([{
                 id: newActivity.id,
                 user_id: newActivity.userId,
@@ -157,7 +166,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const updateActivityStatus = async (activityId: string, status: ActivityStatus) => {
-        if (isSupabaseConfigured && supabase) {
+        if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').update({ status }).eq('id', activityId);
         }
         setActivities(prev => prev.map(act => act.id === activityId ? { ...act, status } : act));
@@ -167,7 +176,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const updates: Partial<User> = { name };
         if (password) updates.password = password;
 
-        if (isSupabaseConfigured && supabase) {
+        if (dbStatus === 'connected' && supabase) {
             await supabase.from('users').update(updates).eq('id', userId);
             await supabase.from('activities').update({ user_name: name }).eq('user_id', userId);
         }
@@ -182,7 +191,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     const addMember = async (name: string, password: string) => {
         const newUser: User = { id: `user${Date.now()}`, name, password, role: 'member' };
-        if (isSupabaseConfigured && supabase) {
+        if (dbStatus === 'connected' && supabase) {
             await supabase.from('users').insert([newUser]);
         }
         setUsers(prev => [...prev, newUser]);
@@ -190,12 +199,10 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const deleteMember = async (userId: string) => {
         if (userId === 'admin' || userId === currentUser?.id) return;
-        
-        if (isSupabaseConfigured && supabase) {
+        if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').delete().eq('user_id', userId);
             await supabase.from('users').delete().eq('id', userId);
         }
-        
         setUsers(prev => prev.filter(u => u.id !== userId));
         setActivities(prev => prev.filter(a => a.userId !== userId));
     };
@@ -231,7 +238,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         <ClubDataContext.Provider value={{
             currentUser, login, logout, users, members, activities,
             addActivity, updateActivityStatus, updateMember, addMember, 
-            deleteMember, memberStats, loading
+            deleteMember, memberStats, loading, dbStatus, dbErrorMessage
         }}>
             {children}
         </ClubDataContext.Provider>

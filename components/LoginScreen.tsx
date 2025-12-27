@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useClubData } from '../hooks/useClubData';
 
 const LoginScreen: React.FC = () => {
@@ -21,7 +21,7 @@ const LoginScreen: React.FC = () => {
         }
         const success = login(selectedUserId, password);
         if (!success) {
-            setError('Invalid credentials. Please try again.');
+            setError('Invalid access pin. Please try again.');
         }
     };
 
@@ -35,17 +35,16 @@ const LoginScreen: React.FC = () => {
                         </svg>
                     </div>
                     <h1 className="text-3xl font-extrabold text-white text-center tracking-tight">Rotaract Tracker</h1>
-                    <p className="text-gray-400 text-sm mt-2 text-center">Engagement & Activity Management System</p>
+                    <p className="text-gray-400 text-sm mt-2 text-center italic">Engagement & Activity Management System</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
-                        <label htmlFor="user-select" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 ml-1">Member Profile</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 ml-1">Member Profile</label>
                         <select
-                            id="user-select"
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none"
+                            className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-teal-500 transition-all outline-none"
                         >
                             <option value="">Choose a profile...</option>
                             {users.map(user => (
@@ -56,24 +55,23 @@ const LoginScreen: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="password-input" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 ml-1">Access Pin</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 ml-1">Access Pin</label>
                         <input
-                            id="password-input"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
-                            className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none placeholder-gray-500"
+                            className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-teal-500 transition-all outline-none placeholder-gray-500"
                         />
                     </div>
                     {error && (
-                        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
-                            <p className="text-sm text-rose-400 text-center font-semibold">{error}</p>
+                        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-sm text-rose-400 text-center font-semibold">
+                            {error}
                         </div>
                     )}
                     <button
                         type="submit"
-                        className="w-full py-4 px-6 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-500 transform active:scale-[0.98] transition-all duration-200 shadow-xl shadow-teal-900/40"
+                        className="w-full py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-500 transform active:scale-[0.98] transition-all shadow-xl shadow-teal-900/40"
                     >
                         Sign In
                     </button>
@@ -82,10 +80,6 @@ const LoginScreen: React.FC = () => {
             
             <footer className="mt-12 text-center text-gray-500 text-sm">
                 <p>&copy; 2025 &bull; Built by <span className="text-teal-400 font-semibold">Kaustubh Patil</span> &bull; All rights reserved</p>
-                <div className="mt-2 flex items-center justify-center space-x-2 text-xs opacity-50">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                    <span>Secure Cloud Instance Connected</span>
-                </div>
             </footer>
         </div>
     );

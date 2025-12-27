@@ -35,8 +35,6 @@ export const useClubData = () => {
 
 const STORAGE_KEY_USERS = 'rotaract_tracker_users';
 const STORAGE_KEY_ACTIVITIES = 'rotaract_tracker_activities';
-const STORAGE_KEY_ANNOUNCEMENTS = 'rotaract_tracker_announcements';
-const STORAGE_KEY_NOTIFICATIONS = 'rotaract_tracker_notifications';
 
 export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [users, setUsers] = useState<User[]>([]);
@@ -54,10 +52,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             
             if (isSupabaseConfigured && supabase) {
                 try {
-                    const { data: userData, error: userError } = await supabase.from('users').select('*');
-                    if (userError) throw userError;
-
-                    setDbStatus('connected');
+                    const { data: userData } = await supabase.from('users').select('*');
                     if (userData && userData.length > 0) {
                         setUsers(userData);
                     } else {
@@ -65,8 +60,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         setUsers(USERS);
                     }
 
-                    const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
-                    if (!activityError && activityData) {
+                    const { data: activityData } = await supabase.from('activities').select('*');
+                    if (activityData) {
                         setActivities(activityData.map((row: any) => ({
                             id: row.id,
                             userId: row.user_id,
@@ -86,40 +81,22 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     const { data: notData } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
                     if (notData) setNotifications(notData.map(n => ({ id: n.id, userId: n.user_id, text: n.text, createdAt: n.created_at, read: n.read })));
 
+                    setDbStatus('connected');
                 } catch (e: any) {
                     setDbStatus('error');
                     setDbErrorMessage(e.message);
-                    loadLocalData();
                 }
             } else {
                 setDbStatus('local');
-                loadLocalData();
+                const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
+                const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
+                setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
+                setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
             }
             setLoading(false);
         };
-
-        const loadLocalData = () => {
-            const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
-            const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
-            const savedAnn = localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS);
-            const savedNot = localStorage.getItem(STORAGE_KEY_NOTIFICATIONS);
-            setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
-            setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
-            setAnnouncements(savedAnn ? JSON.parse(savedAnn) : []);
-            setNotifications(savedNot ? JSON.parse(savedNot) : []);
-        };
-
         loadData();
     }, []);
-
-    useEffect(() => {
-        if (!loading) {
-            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-            localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
-            localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(announcements));
-            localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(notifications));
-        }
-    }, [users, activities, announcements, notifications, loading]);
 
     const members = useMemo(() => users.filter(u => u.role === 'member'), [users]);
 
@@ -169,48 +146,24 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').update({ status }).eq('id', activityId);
             if (status === ActivityStatus.APPROVED) {
-                await sendNotification(act.userId, `Your ${act.type} submission has been approved! (+${act.points} pts)`);
-            } else if (status === ActivityStatus.REJECTED) {
-                await sendNotification(act.userId, `Your ${act.type} submission was not approved.`);
+                await sendNotification(act.userId, `Your ${act.type} was approved! (+${act.points} pts)`);
             }
         }
         setActivities(prev => prev.map(a => a.id === activityId ? { ...a, status } : a));
     };
 
     const addAnnouncement = async (text: string) => {
-        const newAnn: Announcement = {
-            id: `ann${Date.now()}`,
-            text,
-            author: currentUser?.name || 'Admin',
-            createdAt: new Date().toISOString()
-        };
+        const newAnn: Announcement = { id: `ann${Date.now()}`, text, author: currentUser?.name || 'Admin', createdAt: new Date().toISOString() };
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('announcements').insert([{
-                id: newAnn.id,
-                text: newAnn.text,
-                author: newAnn.author,
-                created_at: newAnn.createdAt
-            }]);
+            await supabase.from('announcements').insert([{ id: newAnn.id, text: newAnn.text, author: newAnn.author, created_at: newAnn.createdAt }]);
         }
         setAnnouncements(prev => [newAnn, ...prev]);
     };
 
     const sendNotification = async (userId: string, text: string) => {
-        const newNot: Notification = {
-            id: `not${Date.now()}`,
-            userId,
-            text,
-            createdAt: new Date().toISOString(),
-            read: false
-        };
+        const newNot: Notification = { id: `not${Date.now()}`, userId, text, createdAt: new Date().toISOString(), read: false };
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('notifications').insert([{
-                id: newNot.id,
-                user_id: newNot.userId,
-                text: newNot.text,
-                created_at: newNot.createdAt,
-                read: false
-            }]);
+            await supabase.from('notifications').insert([{ id: newNot.id, user_id: newNot.userId, text: newNot.text, created_at: newNot.createdAt, read: false }]);
         }
         setNotifications(prev => [newNot, ...prev]);
     };
@@ -251,8 +204,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const count = sorted.length;
         if (count > 0) {
             sorted.forEach((m, idx) => {
-                const rank = idx + 1;
-                const percentile = rank / count;
+                const percentile = (idx + 1) / count;
                 if (m.totalPoints === 0) m.zone = 'red';
                 else if (percentile <= 0.3) m.zone = 'green';
                 else if (percentile <= 0.7) m.zone = 'orange';

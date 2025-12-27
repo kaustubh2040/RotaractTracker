@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
-import type { User, Activity, MemberStats, Announcement, Notification } from '../types';
+import type { User, Activity, MemberStats, Announcement, Notification, AppSettings } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES, ACTIVITY_POINTS } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
@@ -14,6 +14,8 @@ interface ClubDataContextType {
     activities: Activity[];
     announcements: Announcement[];
     notifications: Notification[];
+    settings: AppSettings;
+    updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
     addActivity: (activity: Omit<Activity, 'id' | 'status' | 'userName' | 'submittedAt'>) => Promise<void>;
     updateActivityStatus: (activityId: string, status: ActivityStatus) => Promise<void>;
     updateMember: (userId: string, name: string, password?: string) => Promise<void>;
@@ -41,6 +43,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [activities, setActivities] = useState<Activity[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '' });
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
@@ -81,6 +84,12 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     const { data: notData } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
                     if (notData) setNotifications(notData.map(n => ({ id: n.id, userId: n.user_id, text: n.text, createdAt: n.created_at, read: n.read })));
 
+                    const { data: settingsData } = await supabase.from('settings').select('*');
+                    if (settingsData) {
+                        const logoSetting = settingsData.find(s => s.key === 'club_logo_url');
+                        if (logoSetting) setSettings({ clubLogoUrl: logoSetting.value });
+                    }
+
                     setDbStatus('connected');
                 } catch (e: any) {
                     setDbStatus('error');
@@ -97,6 +106,15 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
         loadData();
     }, []);
+
+    const updateSettings = async (newSettings: Partial<AppSettings>) => {
+        if (newSettings.clubLogoUrl !== undefined) {
+            setSettings(prev => ({ ...prev, clubLogoUrl: newSettings.clubLogoUrl! }));
+            if (dbStatus === 'connected' && supabase) {
+                await supabase.from('settings').upsert({ key: 'club_logo_url', value: newSettings.clubLogoUrl });
+            }
+        }
+    };
 
     const members = useMemo(() => users.filter(u => u.role === 'member'), [users]);
 
@@ -216,7 +234,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return (
         <ClubDataContext.Provider value={{
-            currentUser, login, logout, users, members, activities, announcements, notifications,
+            currentUser, login, logout, users, members, activities, announcements, notifications, settings, updateSettings,
             addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
             addAnnouncement, sendNotification, memberStats, loading, dbStatus, dbErrorMessage
         }}>

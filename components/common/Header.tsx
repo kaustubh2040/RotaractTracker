@@ -3,16 +3,20 @@ import React from 'react';
 import { useClubData } from '../../hooks/useClubData';
 
 const Header: React.FC = () => {
-    const { currentUser, logout } = useClubData();
+    const { currentUser, logout, settings } = useClubData();
 
     return (
         <header className="bg-gray-800 border-b border-gray-700 h-16 sticky top-0 z-50 flex items-center justify-between px-6">
             <div className="flex items-center cursor-pointer" onClick={() => window.location.reload()}>
-                <div className="bg-teal-600/20 p-2 rounded-lg mr-3">
-                    <svg className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
+                {settings.clubLogoUrl ? (
+                    <img src={settings.clubLogoUrl} alt="Club Logo" className="h-10 w-10 object-contain mr-3 rounded" />
+                ) : (
+                    <div className="bg-teal-600/20 p-2 rounded-lg mr-3">
+                        <svg className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                )}
                 <h1 className="text-lg font-black text-white tracking-tighter uppercase">Rotaract</h1>
             </div>
             

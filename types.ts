@@ -24,8 +24,8 @@ export interface Activity {
   userName: string;
   type: ActivityType;
   description: string;
-  date: string; // The date the activity happened
-  submittedAt: string; // The date the report was submitted
+  date: string; 
+  submittedAt: string; 
   points: number;
   status: ActivityStatus;
 }
@@ -43,6 +43,10 @@ export interface Notification {
   text: string;
   createdAt: string;
   read: boolean;
+}
+
+export interface AppSettings {
+  clubLogoUrl: string;
 }
 
 export interface MemberStats {

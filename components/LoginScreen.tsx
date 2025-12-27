@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useClubData } from '../hooks/useClubData';
 
 const LoginScreen: React.FC = () => {
-    const { users, login } = useClubData();
+    const { users, login, settings } = useClubData();
     const [selectedUserId, setSelectedUserId] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -29,13 +29,17 @@ const LoginScreen: React.FC = () => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 px-4">
             <div className="p-8 bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="bg-teal-500/10 p-4 rounded-full mb-4 ring-1 ring-teal-500/30">
-                        <svg className="h-12 w-12 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 11a4 4 0 110-5.292M12 4.354a4 4 0 000 5.292" />
-                        </svg>
-                    </div>
-                    <h1 className="text-3xl font-extrabold text-white text-center tracking-tight">Rotaract Tracker</h1>
-                    <p className="text-gray-400 text-sm mt-2 text-center italic">Engagement & Activity Management System</p>
+                    {settings.clubLogoUrl ? (
+                        <img src={settings.clubLogoUrl} alt="Club Logo" className="h-24 w-24 object-contain mb-6 rounded-xl shadow-lg border border-gray-700 p-2 bg-gray-900/50" />
+                    ) : (
+                        <div className="bg-teal-500/10 p-4 rounded-full mb-4 ring-1 ring-teal-500/30">
+                            <svg className="h-12 w-12 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 11a4 4 0 110-5.292M12 4.354a4 4 0 000 5.292" />
+                            </svg>
+                        </div>
+                    )}
+                    <h1 className="text-3xl font-extrabold text-white text-center tracking-tight uppercase">Rotaract Tracker</h1>
+                    <p className="text-gray-400 text-sm mt-2 text-center italic">Engagement & Activity Management</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-6">

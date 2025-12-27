@@ -9,20 +9,29 @@ const Header: React.FC = () => {
     const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
+        // Detect if the app is already running in standalone mode (installed)
         const checkStandalone = () => {
             const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
             setIsStandalone(isStandaloneMode);
         };
         checkStandalone();
 
+        // Listen for the browser's PWA install prompt event
         const handleBeforeInstallPrompt = (e: any) => {
+            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
+            // Stash the event so it can be triggered later
             setDeferredPrompt(e);
+            // Update UI to show the install button
             setIsInstallable(true);
+            console.log('PWA is ready for installation');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        // Listen for successful installation
         window.addEventListener('appinstalled', () => {
+            console.log('PWA was successfully installed');
             setIsInstallable(false);
             setIsStandalone(true);
             setDeferredPrompt(null);
@@ -33,14 +42,25 @@ const Header: React.FC = () => {
         };
     }, []);
 
-    const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setDeferredPrompt(null);
-            setIsInstallable(false);
+    const handleInstallClick = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!deferredPrompt) {
+            console.log('Install prompt not available yet');
+            return;
         }
+
+        // Show the native install prompt
+        deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // Clear the deferred prompt regardless of outcome
+        setDeferredPrompt(null);
+        setIsInstallable(false);
     };
 
     return (
@@ -66,8 +86,8 @@ const Header: React.FC = () => {
                 </div>
             </div>
             
-            <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-8">
-                <nav className="hidden md:flex items-center space-x-6">
+            <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6">
+                <nav className="hidden lg:flex items-center space-x-6 mr-4">
                     <button 
                         onClick={() => setCurrentPage('home')}
                         className={`text-[10px] font-black uppercase tracking-[0.2em] ${currentPage === 'home' ? 'text-teal-400 border-b-2 border-teal-500 pb-1' : 'text-gray-400 hover:text-white'} transition-all`}
@@ -98,40 +118,43 @@ const Header: React.FC = () => {
                     )}
                 </nav>
 
-                <div className="h-8 w-px bg-gray-700 hidden sm:block"></div>
-
-                {isInstallable && !isStandalone && (
-                    <button
-                        onClick={handleInstallClick}
-                        className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all animate-pulse"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        <span className="hidden sm:inline">Install App</span>
-                        <span className="sm:hidden">Install</span>
-                    </button>
-                )}
-
-                {currentUser ? (
-                    <div className="flex items-center space-x-2 sm:space-x-4">
-                        <div className="hidden sm:block text-right">
-                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none mb-1">Impact Level</p>
-                            <p className="text-xs font-black text-white">{currentUser.name}</p>
-                        </div>
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                    {/* PWA Install Button - Functional and prominent next to Sign In */}
+                    {isInstallable && !isStandalone && (
                         <button
-                            onClick={logout}
-                            className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-rose-500/20 text-gray-400 hover:text-rose-400 rounded-lg text-xs font-bold transition-all border border-gray-600 hover:border-rose-500/30"
+                            onClick={handleInstallClick}
+                            className="flex items-center space-x-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-gray-950 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-teal-500/20 active:scale-95 animate-pulse"
+                            title="Install Actra App"
                         >
-                            Logout
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span>Install App</span>
                         </button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => setCurrentPage('login')}
-                        className="px-4 sm:px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-teal-900/20"
-                    >
-                        Sign In
-                    </button>
-                )}
+                    )}
+
+                    {currentUser ? (
+                        <div className="flex items-center space-x-2 sm:space-x-4">
+                            <div className="hidden sm:block text-right">
+                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none mb-1">Impact Level</p>
+                                <p className="text-xs font-black text-white">{currentUser.name}</p>
+                            </div>
+                            <button
+                                onClick={logout}
+                                className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-rose-500/20 text-gray-400 hover:text-rose-400 rounded-lg text-xs font-bold transition-all border border-gray-600 hover:border-rose-500/30"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setCurrentPage('login')}
+                            className="px-4 sm:px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-teal-900/20 border border-teal-500/50"
+                        >
+                            Sign In
+                        </button>
+                    )}
+                </div>
             </div>
         </header>
     );

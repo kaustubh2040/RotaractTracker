@@ -1,8 +1,8 @@
 
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
-import type { User, Activity, MemberStats } from '../types';
+import type { User, Activity, MemberStats, Announcement, Notification } from '../types';
 import { ActivityStatus } from '../types';
-import { USERS, INITIAL_ACTIVITIES } from '../constants';
+import { USERS, INITIAL_ACTIVITIES, ACTIVITY_POINTS } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 interface ClubDataContextType {
@@ -12,11 +12,15 @@ interface ClubDataContextType {
     users: User[];
     members: User[];
     activities: Activity[];
-    addActivity: (activity: Omit<Activity, 'id' | 'status' | 'userName'>) => Promise<void>;
+    announcements: Announcement[];
+    notifications: Notification[];
+    addActivity: (activity: Omit<Activity, 'id' | 'status' | 'userName' | 'submittedAt'>) => Promise<void>;
     updateActivityStatus: (activityId: string, status: ActivityStatus) => Promise<void>;
     updateMember: (userId: string, name: string, password?: string) => Promise<void>;
     addMember: (name: string, password: string) => Promise<void>;
     deleteMember: (userId: string) => Promise<void>;
+    addAnnouncement: (text: string) => Promise<void>;
+    sendNotification: (userId: string, text: string) => Promise<void>;
     memberStats: MemberStats[];
     loading: boolean;
     dbStatus: 'connected' | 'local' | 'error';
@@ -31,10 +35,14 @@ export const useClubData = () => {
 
 const STORAGE_KEY_USERS = 'rotaract_tracker_users';
 const STORAGE_KEY_ACTIVITIES = 'rotaract_tracker_activities';
+const STORAGE_KEY_ANNOUNCEMENTS = 'rotaract_tracker_announcements';
+const STORAGE_KEY_NOTIFICATIONS = 'rotaract_tracker_notifications';
 
 export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [activities, setActivities] = useState<Activity[]>([]);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
@@ -46,97 +54,72 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             
             if (isSupabaseConfigured && supabase) {
                 try {
-                    // 1. FETCH USERS
-                    // Always pull fresh from DB to prevent code updates from resetting state
                     const { data: userData, error: userError } = await supabase.from('users').select('*');
-                    
-                    if (userError) {
-                        console.error("Supabase Error:", userError);
-                        throw new Error(`Supabase error: ${userError.message}`);
-                    }
+                    if (userError) throw userError;
 
                     setDbStatus('connected');
-
-                    let finalUsers: User[] = [];
-                    // Only seed if the database is literally empty (even no Admin)
                     if (userData && userData.length > 0) {
-                        finalUsers = userData;
                         setUsers(userData);
                     } else {
-                        // This block only runs on the very first time the app is launched against a new DB
-                        console.log("Seeding initial users to new database...");
                         await supabase.from('users').upsert(USERS);
-                        finalUsers = USERS;
                         setUsers(USERS);
                     }
 
-                    // 2. FETCH ACTIVITIES
                     const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
-                    if (activityError) throw activityError;
-
-                    if (activityData && activityData.length > 0) {
-                        const mappedActivities: Activity[] = activityData.map((row: any) => ({
+                    if (!activityError && activityData) {
+                        setActivities(activityData.map((row: any) => ({
                             id: row.id,
                             userId: row.user_id,
                             userName: row.user_name,
                             type: row.type,
                             description: row.description,
                             date: row.date,
+                            submittedAt: row.submitted_at || row.date,
                             points: row.points,
                             status: row.status as ActivityStatus
-                        }));
-                        setActivities(mappedActivities);
-                    } else if (userData && userData.length === 0) {
-                        // Only seed activities if it's the very first setup (0 users existed)
-                        console.log("Seeding initial activities to new database...");
-                        const dbActivities = INITIAL_ACTIVITIES.map(a => ({
-                            id: a.id,
-                            user_id: a.userId,
-                            user_name: a.userName,
-                            type: a.type,
-                            description: a.description,
-                            date: a.date,
-                            points: a.points,
-                            status: a.status
-                        }));
-                        await supabase.from('activities').insert(dbActivities);
-                        setActivities(INITIAL_ACTIVITIES);
-                    } else {
-                        // User has cleared activities but kept members, or just hasn't added activities yet.
-                        // Do NOT re-seed dummy data here.
-                        setActivities([]);
+                        })));
                     }
+
+                    const { data: annData } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+                    if (annData) setAnnouncements(annData.map(a => ({ id: a.id, text: a.text, author: a.author, createdAt: a.created_at })));
+
+                    const { data: notData } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
+                    if (notData) setNotifications(notData.map(n => ({ id: n.id, userId: n.user_id, text: n.text, createdAt: n.created_at, read: n.read })));
+
                 } catch (e: any) {
-                    console.error("Supabase connection failed:", e);
                     setDbStatus('error');
-                    setDbErrorMessage(e.message || "Failed to connect to Supabase");
-                    
-                    // Offline Fallback
-                    const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
-                    const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
-                    setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
-                    setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
+                    setDbErrorMessage(e.message);
+                    loadLocalData();
                 }
             } else {
                 setDbStatus('local');
-                const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
-                const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
-                setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
-                setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
+                loadLocalData();
             }
             setLoading(false);
         };
+
+        const loadLocalData = () => {
+            const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
+            const savedActivities = localStorage.getItem(STORAGE_KEY_ACTIVITIES);
+            const savedAnn = localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS);
+            const savedNot = localStorage.getItem(STORAGE_KEY_NOTIFICATIONS);
+            setUsers(savedUsers ? JSON.parse(savedUsers) : USERS);
+            setActivities(savedActivities ? JSON.parse(savedActivities) : INITIAL_ACTIVITIES);
+            setAnnouncements(savedAnn ? JSON.parse(savedAnn) : []);
+            setNotifications(savedNot ? JSON.parse(savedNot) : []);
+        };
+
         loadData();
     }, []);
 
-    // Sync Local Storage as a secondary backup
     useEffect(() => {
-        if (users.length > 0) localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-    }, [users]);
-
-    useEffect(() => {
-        if (activities.length > 0) localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
-    }, [activities]);
+        if (!loading) {
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+            localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
+            localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(announcements));
+            localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(notifications));
+        }
+    }, [users, activities, announcements, notifications, loading]);
 
     const members = useMemo(() => users.filter(u => u.role === 'member'), [users]);
 
@@ -151,7 +134,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const logout = () => setCurrentUser(null);
 
-    const addActivity = async (activity: Omit<Activity, 'id' | 'status' | 'userName'>) => {
+    const addActivity = async (activity: Omit<Activity, 'id' | 'status' | 'userName' | 'submittedAt'>) => {
         const user = users.find(u => u.id === activity.userId);
         if (!user) return;
 
@@ -160,51 +143,87 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             id: `act${Date.now()}`,
             status: ActivityStatus.PENDING,
             userName: user.name,
+            submittedAt: new Date().toISOString().split('T')[0],
         };
 
         if (dbStatus === 'connected' && supabase) {
-            try {
-                await supabase.from('activities').insert([{
-                    id: newActivity.id,
-                    user_id: newActivity.userId,
-                    user_name: newActivity.userName,
-                    type: newActivity.type,
-                    description: newActivity.description,
-                    date: newActivity.date,
-                    points: newActivity.points,
-                    status: newActivity.status
-                }]);
-            } catch (err) {
-                console.error("Failed to save activity to cloud:", err);
-            }
+            await supabase.from('activities').insert([{
+                id: newActivity.id,
+                user_id: newActivity.userId,
+                user_name: newActivity.userName,
+                type: newActivity.type,
+                description: newActivity.description,
+                date: newActivity.date,
+                submitted_at: newActivity.submittedAt,
+                points: newActivity.points,
+                status: newActivity.status
+            }]);
         }
         setActivities(prev => [...prev, newActivity]);
     };
 
     const updateActivityStatus = async (activityId: string, status: ActivityStatus) => {
+        const act = activities.find(a => a.id === activityId);
+        if (!act) return;
+
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('activities').update({ status }).eq('id', activityId);
+            if (status === ActivityStatus.APPROVED) {
+                await sendNotification(act.userId, `Your ${act.type} submission has been approved! (+${act.points} pts)`);
+            } else if (status === ActivityStatus.REJECTED) {
+                await sendNotification(act.userId, `Your ${act.type} submission was not approved.`);
+            }
         }
-        setActivities(prev => prev.map(act => act.id === activityId ? { ...act, status } : act));
+        setActivities(prev => prev.map(a => a.id === activityId ? { ...a, status } : a));
     };
-    
+
+    const addAnnouncement = async (text: string) => {
+        const newAnn: Announcement = {
+            id: `ann${Date.now()}`,
+            text,
+            author: currentUser?.name || 'Admin',
+            createdAt: new Date().toISOString()
+        };
+        if (dbStatus === 'connected' && supabase) {
+            await supabase.from('announcements').insert([{
+                id: newAnn.id,
+                text: newAnn.text,
+                author: newAnn.author,
+                created_at: newAnn.createdAt
+            }]);
+        }
+        setAnnouncements(prev => [newAnn, ...prev]);
+    };
+
+    const sendNotification = async (userId: string, text: string) => {
+        const newNot: Notification = {
+            id: `not${Date.now()}`,
+            userId,
+            text,
+            createdAt: new Date().toISOString(),
+            read: false
+        };
+        if (dbStatus === 'connected' && supabase) {
+            await supabase.from('notifications').insert([{
+                id: newNot.id,
+                user_id: newNot.userId,
+                text: newNot.text,
+                created_at: newNot.createdAt,
+                read: false
+            }]);
+        }
+        setNotifications(prev => [newNot, ...prev]);
+    };
+
     const updateMember = async (userId: string, name: string, password?: string) => {
         const updates: Partial<User> = { name };
         if (password) updates.password = password;
-
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('users').update(updates).eq('id', userId);
-            await supabase.from('activities').update({ user_name: name }).eq('user_id', userId);
         }
-
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
-        setActivities(prev => prev.map(a => a.userId === userId ? { ...a, userName: name } : a));
-        
-        if (currentUser && currentUser.id === userId) {
-            setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
-        }
     };
-    
+
     const addMember = async (name: string, password: string) => {
         const newUser: User = { id: `user${Date.now()}`, name, password, role: 'member' };
         if (dbStatus === 'connected' && supabase) {
@@ -214,47 +233,40 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const deleteMember = async (userId: string) => {
-        if (userId === 'admin' || userId === currentUser?.id) return;
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('activities').delete().eq('user_id', userId);
             await supabase.from('users').delete().eq('id', userId);
         }
         setUsers(prev => prev.filter(u => u.id !== userId));
-        setActivities(prev => prev.filter(a => a.userId !== userId));
     };
 
     const memberStats = useMemo<MemberStats[]>(() => {
         const approvedActivities = activities.filter(a => a.status === ActivityStatus.APPROVED);
         const stats: MemberStats[] = members.map(member => {
-            const memberActivities = approvedActivities.filter(a => a.userId === member.id);
-            const totalPoints = memberActivities.reduce((sum, act) => sum + act.points, 0);
-            return {
-                userId: member.id,
-                name: member.name,
-                totalPoints,
-                activities: memberActivities,
-                zone: 'red' as const,
-            };
+            const mActs = approvedActivities.filter(a => a.userId === member.id);
+            const totalPoints = mActs.reduce((sum, act) => sum + act.points, 0);
+            return { userId: member.id, name: member.name, totalPoints, activities: mActs, zone: 'red' as const };
         });
 
-        const maxPoints = Math.max(...stats.map(s => s.totalPoints), 0);
-        stats.forEach(m => {
-            if (maxPoints > 0) {
-                const p = (m.totalPoints / maxPoints) * 100;
-                m.zone = p >= 70 ? 'green' : (p >= 30 ? 'yellow' : 'red');
-            } else {
-                m.zone = 'red';
-            }
-        });
-
-        return stats.sort((a, b) => b.totalPoints - a.totalPoints);
+        const sorted = stats.sort((a, b) => b.totalPoints - a.totalPoints);
+        const count = sorted.length;
+        if (count > 0) {
+            sorted.forEach((m, idx) => {
+                const rank = idx + 1;
+                const percentile = rank / count;
+                if (m.totalPoints === 0) m.zone = 'red';
+                else if (percentile <= 0.3) m.zone = 'green';
+                else if (percentile <= 0.7) m.zone = 'orange';
+                else m.zone = 'red';
+            });
+        }
+        return sorted;
     }, [activities, members]);
 
     return (
         <ClubDataContext.Provider value={{
-            currentUser, login, logout, users, members, activities,
-            addActivity, updateActivityStatus, updateMember, addMember, 
-            deleteMember, memberStats, loading, dbStatus, dbErrorMessage
+            currentUser, login, logout, users, members, activities, announcements, notifications,
+            addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
+            addAnnouncement, sendNotification, memberStats, loading, dbStatus, dbErrorMessage
         }}>
             {children}
         </ClubDataContext.Provider>

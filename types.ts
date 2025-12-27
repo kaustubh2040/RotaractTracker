@@ -24,9 +24,25 @@ export interface Activity {
   userName: string;
   type: ActivityType;
   description: string;
-  date: string;
+  date: string; // The date the activity happened
+  submittedAt: string; // The date the report was submitted
   points: number;
   status: ActivityStatus;
+}
+
+export interface Announcement {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  text: string;
+  createdAt: string;
+  read: boolean;
 }
 
 export interface MemberStats {
@@ -34,5 +50,5 @@ export interface MemberStats {
     name: string;
     totalPoints: number;
     activities: Activity[];
-    zone: 'green' | 'yellow' | 'red';
+    zone: 'green' | 'orange' | 'red';
 }

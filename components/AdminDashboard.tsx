@@ -26,6 +26,8 @@ const AdminDashboard: React.FC = () => {
     const [evtDesc, setEvtDesc] = useState('');
     const [evtImg, setEvtImg] = useState('');
     const [evtDate, setEvtDate] = useState('');
+    const [evtVenue, setEvtVenue] = useState('');
+    const [evtRegEnabled, setEvtRegEnabled] = useState(true);
     const [evtUpcoming, setEvtUpcoming] = useState(false);
 
     // Configuration Form State
@@ -83,12 +85,16 @@ const AdminDashboard: React.FC = () => {
             description: evtDesc,
             imageUrl: evtImg,
             date: evtDate,
+            venue: evtVenue,
+            registrationEnabled: evtRegEnabled,
             isUpcoming: evtUpcoming
         });
         setEvtTitle('');
         setEvtDesc('');
         setEvtImg('');
         setEvtDate('');
+        setEvtVenue('');
+        setEvtRegEnabled(true);
         setEvtUpcoming(false);
         alert('Event published!');
     };
@@ -176,12 +182,18 @@ const AdminDashboard: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input value={evtTitle} onChange={e => setEvtTitle(e.target.value)} placeholder="Event Title" className="p-3 bg-gray-700 rounded-xl border border-gray-600 text-white" />
                                 <input value={evtDate} onChange={e => setEvtDate(e.target.value)} type="date" className="p-3 bg-gray-700 rounded-xl border border-gray-600 text-white" />
+                                <input value={evtVenue} onChange={e => setEvtVenue(e.target.value)} placeholder="Venue / Location" className="p-3 bg-gray-700 rounded-xl border border-gray-600 text-white" />
                                 <input value={evtImg} onChange={e => setEvtImg(e.target.value)} placeholder="Image URL" className="p-3 bg-gray-700 rounded-xl border border-gray-600 text-white" />
-                                <div className="flex items-center space-x-3 bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                    <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 bg-gray-900 border-gray-600 rounded" />
-                                    <span className="text-sm text-gray-300">Upcoming Event</span>
+                                
+                                <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                    <span className="text-sm text-gray-300">Registration Portal</span>
+                                    <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" />
                                 </div>
-                                <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Short Description" className="md:col-span-2 p-3 bg-gray-700 rounded-xl border border-gray-600 text-white h-24" />
+                                <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                    <span className="text-sm text-gray-300">Upcoming Status</span>
+                                    <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                                </div>
+                                <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Detailed Description (Tell the story...)" className="md:col-span-2 p-3 bg-gray-700 rounded-xl border border-gray-600 text-white h-32" />
                             </div>
                             <button onClick={handleCreateEvent} className="mt-4 w-full py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20">Publish Event</button>
                         </Card>
@@ -194,7 +206,7 @@ const AdminDashboard: React.FC = () => {
                                             <img src={evt.imageUrl || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-lg object-cover" />
                                             <div>
                                                 <h4 className="text-white font-bold">{evt.title}</h4>
-                                                <p className="text-xs text-gray-500">{new Date(evt.date).toLocaleDateString()} &bull; {evt.isUpcoming ? 'Upcoming' : 'Past Impact'}</p>
+                                                <p className="text-xs text-gray-500">{new Date(evt.date).toLocaleDateString()} &bull; {evt.venue || 'No Venue'}</p>
                                             </div>
                                         </div>
                                         <button onClick={() => deletePublicEvent(evt.id)} className="text-rose-500 hover:text-rose-400 p-2">

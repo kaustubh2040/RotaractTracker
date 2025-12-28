@@ -109,7 +109,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: eventData } = await supabase.from('public_events').select('*').order('date', { ascending: false });
                     if (eventData) setPublicEvents(eventData.map(e => ({
-                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, isUpcoming: e.is_upcoming
+                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, registrationEnabled: e.registration_enabled, isUpcoming: e.is_upcoming
                     })));
 
                     setDbStatus('connected');
@@ -173,7 +173,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('public_events').insert([{
                 id: newEvent.id, title: newEvent.title, description: newEvent.description, 
-                image_url: newEvent.imageUrl, date: newEvent.date, is_upcoming: newEvent.isUpcoming
+                image_url: newEvent.imageUrl, date: newEvent.date, venue: newEvent.venue, registration_enabled: newEvent.registrationEnabled, is_upcoming: newEvent.isUpcoming
             }]);
         }
         setPublicEvents(prev => [newEvent, ...prev]);
@@ -196,7 +196,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 description: newAct.description, date: newAct.date, submitted_at: newAct.submittedAt,
                 points: newAct.points, status: newAct.status
             }]);
-            // Notify Admin of new activity
             const admins = users.filter(u => u.role === 'admin');
             for (const admin of admins) {
                 await sendNotification(admin.id, `New activity reported by ${user.name}: ${activity.type}`);
@@ -239,7 +238,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const newFb: Feedback = { id: `fb${Date.now()}`, userId: currentUser.id, userName: currentUser.name, subject, message, createdAt: new Date().toISOString() };
         if (dbStatus === 'connected' && supabase) {
             await supabase.from('feedbacks').insert([{ id: newFb.id, user_id: newFb.userId, user_name: newFb.userName, subject: newFb.subject, message: newFb.message, created_at: newFb.createdAt }]);
-            // Notify Admin of new feedback
             const admins = users.filter(u => u.role === 'admin');
             for (const admin of admins) {
                 await sendNotification(admin.id, `New feedback from ${currentUser.name}: ${subject}`);

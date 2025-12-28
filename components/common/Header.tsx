@@ -9,29 +9,20 @@ const Header: React.FC = () => {
     const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
-        // Detect if the app is already running in standalone mode (installed)
         const checkStandalone = () => {
             const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
             setIsStandalone(isStandaloneMode);
         };
         checkStandalone();
 
-        // Listen for the browser's PWA install prompt event
         const handleBeforeInstallPrompt = (e: any) => {
-            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
-            // Stash the event so it can be triggered later
             setDeferredPrompt(e);
-            // Update UI to show the install button
             setIsInstallable(true);
-            console.log('PWA is ready for installation');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        // Listen for successful installation
         window.addEventListener('appinstalled', () => {
-            console.log('PWA was successfully installed');
             setIsInstallable(false);
             setIsStandalone(true);
             setDeferredPrompt(null);
@@ -45,29 +36,28 @@ const Header: React.FC = () => {
     const handleInstallClick = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        if (!deferredPrompt) {
-            console.log('Install prompt not available yet');
-            return;
-        }
-
-        // Show the native install prompt
+        if (!deferredPrompt) return;
         deferredPrompt.prompt();
-
-        // Wait for the user to respond to the prompt
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-        
-        // Clear the deferred prompt regardless of outcome
         setDeferredPrompt(null);
         setIsInstallable(false);
+    };
+
+    const handleLogoClick = () => {
+        if (currentPage === 'home') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            setCurrentPage('home');
+            // Small delay to allow page transition before scrolling if needed
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+        }
     };
 
     return (
         <header className="bg-gray-800/80 backdrop-blur-md border-b border-gray-700 h-20 sticky top-0 z-50 flex items-center justify-between px-4 lg:px-12 transition-all">
             <div 
                 className="flex items-center cursor-pointer group" 
-                onClick={() => setCurrentPage('home')}
+                onClick={handleLogoClick}
             >
                 <div className="relative p-1 rounded-full bg-gradient-to-tr from-teal-500 via-amber-200 to-teal-400 group-hover:scale-105 transition-transform">
                     <div className="bg-gray-900 p-1.5 rounded-full overflow-hidden flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 border border-gray-800">
@@ -81,8 +71,8 @@ const Header: React.FC = () => {
                     </div>
                 </div>
                 <div className="ml-3 sm:ml-4">
-                    <h1 className="text-lg sm:text-2xl font-black text-white tracking-tighter uppercase leading-none">{settings.appName}</h1>
-                    <p className="text-[7px] sm:text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-1 hidden xs:block">by Rotaract Club of RSCOE</p>
+                    <h1 className="text-xl sm:text-3xl font-black text-white tracking-tighter uppercase leading-none">ACTRA</h1>
+                    <p className="text-[7px] sm:text-[9px] text-teal-400 font-black uppercase tracking-[0.2em] mt-1 hidden xs:block">BY ROTARACT CLUB OF RSCOE</p>
                 </div>
             </div>
             
@@ -119,7 +109,6 @@ const Header: React.FC = () => {
                 </nav>
 
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                    {/* PWA Install Button - Functional and prominent next to Sign In */}
                     {isInstallable && !isStandalone && (
                         <button
                             onClick={handleInstallClick}
@@ -129,14 +118,14 @@ const Header: React.FC = () => {
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            <span>Install App</span>
+                            <span className="hidden xs:inline">Install</span>
                         </button>
                     )}
 
                     {currentUser ? (
                         <div className="flex items-center space-x-2 sm:space-x-4">
                             <div className="hidden sm:block text-right">
-                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none mb-1">Impact Level</p>
+                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none mb-1">Active Member</p>
                                 <p className="text-xs font-black text-white">{currentUser.name}</p>
                             </div>
                             <button

@@ -1,9 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useClubData } from '../hooks/useClubData';
+import { PublicEvent } from '../types';
 
 const HomePage: React.FC = () => {
     const { settings, publicEvents, setCurrentPage } = useClubData();
+    const [selectedEvent, setSelectedEvent] = useState<PublicEvent | null>(null);
+    const [regForm, setRegForm] = useState({ name: '', email: '', phone: '' });
+    const [regStatus, setRegStatus] = useState<'idle' | 'loading' | 'success'>('idle');
     
     // Most recent impact first (past events)
     const recentEvents = [...publicEvents]
@@ -16,6 +20,172 @@ const HomePage: React.FC = () => {
         .filter(e => e.isUpcoming)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 3);
+
+    const handleRegister = (e: React.FormEvent) => {
+        e.preventDefault();
+        setRegStatus('loading');
+        setTimeout(() => {
+            setRegStatus('success');
+            setRegForm({ name: '', email: '', phone: '' });
+        }, 1500);
+    };
+
+    if (selectedEvent) {
+        return (
+            <div className="animate-fadeIn bg-gray-900 min-h-screen pb-20">
+                {/* Back Button */}
+                <div className="container mx-auto px-6 py-8">
+                    <button 
+                        onClick={() => { setSelectedEvent(null); setRegStatus('idle'); }}
+                        className="flex items-center space-x-2 text-gray-400 hover:text-teal-400 transition-colors group"
+                    >
+                        <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Return to Feed</span>
+                    </button>
+                </div>
+
+                {/* Event Creative Detail */}
+                <div className="container mx-auto px-6 max-w-6xl">
+                    <div className="relative h-[400px] lg:h-[500px] rounded-[3rem] overflow-hidden shadow-2xl">
+                        <img 
+                            src={selectedEvent.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop'} 
+                            className="w-full h-full object-cover" 
+                            alt={selectedEvent.title}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent"></div>
+                        <div className="absolute bottom-12 left-12 right-12">
+                            <h2 className="text-4xl lg:text-7xl font-black text-white tracking-tighter uppercase mb-4 leading-tight">
+                                {selectedEvent.title}
+                            </h2>
+                            <div className="flex flex-wrap items-center gap-4">
+                                <span className="bg-teal-500 text-gray-950 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-xl">
+                                    {new Date(selectedEvent.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                                </span>
+                                <span className="bg-gray-800/80 backdrop-blur-md text-teal-400 border border-teal-500/20 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                                    {selectedEvent.venue || 'Venue to be announced'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        {/* Information Section */}
+                        <div className="lg:col-span-2 space-y-8">
+                            <div className="bg-gray-800/40 p-10 rounded-[2.5rem] border border-gray-700">
+                                <h3 className="text-xl font-black text-white uppercase tracking-widest mb-6 flex items-center">
+                                    <span className="w-8 h-px bg-teal-500 mr-4"></span>
+                                    Event Mission
+                                </h3>
+                                <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
+                                    {selectedEvent.description}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="bg-gray-800/40 p-8 rounded-3xl border border-gray-700">
+                                    <p className="text-[10px] font-black text-teal-500 uppercase tracking-widest mb-2">Category</p>
+                                    <p className="text-white font-bold text-lg">Community Service</p>
+                                </div>
+                                <div className="bg-gray-800/40 p-8 rounded-3xl border border-gray-700">
+                                    <p className="text-[10px] font-black text-teal-500 uppercase tracking-widest mb-2">Host Club</p>
+                                    <p className="text-white font-bold text-lg">Rotaract RSCOE</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Registration Panel */}
+                        <div className="lg:col-span-1">
+                            {selectedEvent.registrationEnabled ? (
+                                <div className="bg-teal-500/5 p-10 rounded-[2.5rem] border border-teal-500/20 sticky top-28 shadow-2xl">
+                                    {regStatus === 'success' ? (
+                                        <div className="text-center py-8 animate-fadeIn">
+                                            <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight">Registered!</h4>
+                                            <p className="text-gray-400 mt-4 text-sm">See you at the event. Confirmation sent to your email.</p>
+                                            <button 
+                                                onClick={() => setRegStatus('idle')}
+                                                className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-teal-400 hover:text-white"
+                                            >
+                                                Register Another Person
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleRegister} className="space-y-6">
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Join Event</h4>
+                                            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-8">Limited seats available</p>
+                                            
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Full Name</label>
+                                                    <input 
+                                                        required
+                                                        type="text" 
+                                                        value={regForm.name}
+                                                        onChange={e => setRegForm({...regForm, name: e.target.value})}
+                                                        placeholder="Enter your name" 
+                                                        className="w-full bg-gray-900 border border-gray-700 focus:border-teal-500 p-4 rounded-xl text-white outline-none transition-all placeholder-gray-700"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Gmail / Email</label>
+                                                    <input 
+                                                        required
+                                                        type="email" 
+                                                        value={regForm.email}
+                                                        onChange={e => setRegForm({...regForm, email: e.target.value})}
+                                                        placeholder="user@gmail.com" 
+                                                        className="w-full bg-gray-900 border border-gray-700 focus:border-teal-500 p-4 rounded-xl text-white outline-none transition-all placeholder-gray-700"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Phone Number</label>
+                                                    <input 
+                                                        required
+                                                        type="tel" 
+                                                        value={regForm.phone}
+                                                        onChange={e => setRegForm({...regForm, phone: e.target.value})}
+                                                        placeholder="+91 00000 00000" 
+                                                        className="w-full bg-gray-900 border border-gray-700 focus:border-teal-500 p-4 rounded-xl text-white outline-none transition-all placeholder-gray-700"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <button 
+                                                disabled={regStatus === 'loading'}
+                                                className="w-full py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-teal-900/40 transition-all flex items-center justify-center space-x-2"
+                                            >
+                                                {regStatus === 'loading' ? (
+                                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                ) : (
+                                                    <span>Complete Registration</span>
+                                                )}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="bg-gray-800/40 p-10 rounded-[2.5rem] border border-gray-700 text-center">
+                                    <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="text-lg font-black text-white uppercase tracking-tight">Direct Entry</h4>
+                                    <p className="text-gray-500 mt-2 text-xs font-bold uppercase tracking-widest">No registration required for this event.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-fadeIn">
@@ -68,7 +238,10 @@ const HomePage: React.FC = () => {
                                     <div className="p-8">
                                         <h4 className="text-xl font-black text-white uppercase tracking-tight mb-3 group-hover:text-teal-400 transition-colors">{event.title}</h4>
                                         <p className="text-sm text-gray-400 leading-relaxed mb-6 line-clamp-3">{event.description}</p>
-                                        <button className="w-full py-3 bg-gray-700 group-hover:bg-teal-600 text-[10px] font-black uppercase tracking-widest text-teal-400 group-hover:text-white rounded-xl border border-teal-500/20 group-hover:border-transparent transition-all">
+                                        <button 
+                                            onClick={() => { setSelectedEvent(event); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                            className="w-full py-3 bg-gray-700 group-hover:bg-teal-600 text-[10px] font-black uppercase tracking-widest text-teal-400 group-hover:text-white rounded-xl border border-teal-500/20 group-hover:border-transparent transition-all"
+                                        >
                                             View Details
                                         </button>
                                     </div>
@@ -94,10 +267,10 @@ const HomePage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {recentEvents.length > 0 ? recentEvents.map(event => (
                             <div key={event.id} className="group bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 hover:border-teal-500/50 transition-all hover:-translate-y-2">
-                                <div className="h-48 overflow-hidden relative">
+                                <div className="h-48 overflow-hidden relative" onClick={() => setSelectedEvent(event)}>
                                     <img 
                                         src={event.imageUrl || 'https://images.unsplash.com/photo-1559027615-cd7667dfd31b?q=80&w=2070&auto=format&fit=crop'} 
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 cursor-pointer" 
                                         alt={event.title}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>

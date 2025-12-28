@@ -74,6 +74,8 @@ export interface PublicEvent {
     description: string;
     imageUrl: string;
     date: string;
+    venue: string;
+    registrationEnabled: boolean;
     isUpcoming: boolean;
 }
 

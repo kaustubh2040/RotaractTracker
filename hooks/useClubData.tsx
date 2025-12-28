@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
@@ -99,6 +100,11 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         message: f.message, reply: f.reply, createdAt: f.created_at
                     })));
 
+                    const { data: notData } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
+                    if (notData) setNotifications(notData.map(n => ({
+                        id: n.id, userId: n.user_id, text: n.text, createdAt: n.created_at, read: n.read
+                    })));
+
                     const { data: eventData } = await supabase.from('public_events').select('*').order('date', { ascending: false });
                     if (eventData) setPublicEvents(eventData.map(e => ({
                         id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, category: e.category || 'General', hostClub: e.host_club || 'Rotaract club of RSCOE', registrationEnabled: e.registration_enabled, isUpcoming: e.is_upcoming
@@ -106,7 +112,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: regData } = await supabase.from('event_registrations').select('*');
                     if (regData) setRegistrations(regData.map(r => ({
-                        id: r.id, eventId: r.event_id, eventTitle: r.event_title, eventDate: r.event_date, name: r.name, email: r.email, phone: r.phone, createdAt: r.created_at
+                        id: r.id, event_id: r.event_id, event_title: r.event_title, event_date: r.event_date, name: r.name, email: r.email, phone: r.phone, created_at: r.created_at
                     })));
 
                     // Fetch Global Settings
@@ -206,7 +212,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const updatePublicEvent = async (id: string, updates: Partial<PublicEvent>) => {
         if (dbStatus === 'connected' && supabase) {
-            // Fix: Mapping camelCase updates properties to snake_case for database fields.
             const dbUpdates: any = {
                 title: updates.title,
                 description: updates.description,
@@ -299,8 +304,6 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const deleteMember = async (userId: string) => {
         if (dbStatus === 'connected' && supabase) {
             // Permanent deletion from database
-            // Note: foreign keys (user_id) should handle cascading in the DB
-            // If they don't, manually deleting them here is safer
             await supabase.from('users').delete().eq('id', userId);
         }
         

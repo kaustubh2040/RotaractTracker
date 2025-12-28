@@ -83,9 +83,6 @@ const HomePage: React.FC = () => {
                             <span className="text-teal-400 font-bold uppercase tracking-widest text-xs">
                                 {selectedEvent.venue} &bull; {new Date(selectedEvent.date).toLocaleDateString()}
                             </span>
-                            <span className="text-gray-500 text-xs font-black uppercase tracking-widest leading-none">
-                                &bull; Hosted by {selectedEvent.hostClub}
-                            </span>
                         </div>
                     </div>
                 </div>
@@ -96,6 +93,16 @@ const HomePage: React.FC = () => {
                             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-8 flex items-center">
                                 <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Brief
                             </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700">
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Category</p>
+                                    <p className="text-sm font-bold text-teal-400 uppercase">{selectedEvent.category}</p>
+                                </div>
+                                <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700">
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Host Organization</p>
+                                    <p className="text-sm font-bold text-white uppercase">{selectedEvent.hostClub}</p>
+                                </div>
+                            </div>
                             <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap font-light">
                                 {selectedEvent.description}
                             </p>
@@ -118,7 +125,7 @@ const HomePage: React.FC = () => {
                                 ) : (
                                     <form onSubmit={handleRegisterSubmit} className="space-y-6">
                                         <div className="mb-8">
-                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight">Visitor Entry</h4>
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight">Register Now</h4>
                                             <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Join the impact movement</p>
                                         </div>
                                         <input required type="text" value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})} placeholder="Full Name" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium" />

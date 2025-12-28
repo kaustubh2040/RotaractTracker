@@ -11,15 +11,20 @@ import MemberManagement from './MemberManagement';
 const AdminDashboard: React.FC = () => {
     const { 
         memberStats, activities, addAnnouncement, sendNotification, members, dbStatus, 
-        publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations
+        publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations,
+        settings, updateSettings, aboutContent, updateAboutContent
     } = useClubData();
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings'>('overview');
     const [msg, setMsg] = useState('');
     const [targetUser, setTargetUser] = useState('');
     const [targetMsg, setTargetMsg] = useState('');
     const [replyText, setReplyText] = useState<Record<string, string>>({});
     
+    // Settings States
+    const [tempSettings, setTempSettings] = useState(settings);
+    const [tempAbout, setTempAbout] = useState(aboutContent);
+
     // Event Form State
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
     const [evtTitle, setEvtTitle] = useState('');
@@ -80,6 +85,12 @@ const AdminDashboard: React.FC = () => {
         alert('Event saved successfully!');
     };
 
+    const handleUpdateSettings = async () => {
+        await updateSettings(tempSettings);
+        await updateAboutContent(tempAbout);
+        alert('Application settings updated!');
+    };
+
     const chartData = Object.values(ActivityType).map(type => ({
         name: type,
         count: activities.filter(a => a.type === type).length,
@@ -93,6 +104,7 @@ const AdminDashboard: React.FC = () => {
         { id: 'members', label: 'User Hub', icon: <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 11a4 4 0 110-5.292M12 4.354a4 4 0 000 5.292" /> },
         { id: 'feedback', label: 'Feedback', icon: <path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /> },
         { id: 'communications', label: 'Communcations', icon: <path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /> },
+        { id: 'settings', label: 'App Settings', icon: <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> },
     ];
 
     return (
@@ -141,6 +153,85 @@ const AdminDashboard: React.FC = () => {
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'settings' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        <Card title="Branding & Visuals">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Application Name</label>
+                                    <input 
+                                        value={tempSettings.appName} 
+                                        onChange={e => setTempSettings({...tempSettings, appName: e.target.value})} 
+                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">App Subtitle</label>
+                                    <input 
+                                        value={tempSettings.appSubtitle} 
+                                        onChange={e => setTempSettings({...tempSettings, appSubtitle: e.target.value})} 
+                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Club Logo URL</label>
+                                    <input 
+                                        value={tempSettings.clubLogoUrl} 
+                                        onChange={e => setTempSettings({...tempSettings, clubLogoUrl: e.target.value})} 
+                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                    />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card title="About Content">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Introduction</label>
+                                    <textarea 
+                                        value={tempAbout.intro} 
+                                        onChange={e => setTempAbout({...tempAbout, intro: e.target.value})} 
+                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Vision</label>
+                                        <textarea 
+                                            value={tempAbout.vision} 
+                                            onChange={e => setTempAbout({...tempAbout, vision: e.target.value})} 
+                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Mission</label>
+                                        <textarea 
+                                            value={tempAbout.mission} 
+                                            onChange={e => setTempAbout({...tempAbout, mission: e.target.value})} 
+                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Core Values</label>
+                                    <textarea 
+                                        value={tempAbout.values} 
+                                        onChange={e => setTempAbout({...tempAbout, values: e.target.value})} 
+                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                    />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <button 
+                            onClick={handleUpdateSettings} 
+                            className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-[0.98]"
+                        >
+                            Save All Preferences
+                        </button>
                     </div>
                 )}
 

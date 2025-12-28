@@ -10,12 +10,12 @@ import MemberManagement from './MemberManagement';
 
 const AdminDashboard: React.FC = () => {
     const { 
-        memberStats, activities, addAnnouncement, sendNotification, members, dbStatus, 
+        currentUser, memberStats, activities, addAnnouncement, sendNotification, members, dbStatus, 
         publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations,
-        settings, updateSettings, aboutContent, updateAboutContent
+        settings, updateSettings, aboutContent, updateAboutContent, updateMember
     } = useClubData();
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings' | 'profile'>('overview');
     const [msg, setMsg] = useState('');
     const [targetUser, setTargetUser] = useState('');
     const [targetMsg, setTargetMsg] = useState('');
@@ -25,6 +25,10 @@ const AdminDashboard: React.FC = () => {
     const [tempSettings, setTempSettings] = useState(settings);
     const [tempAbout, setTempAbout] = useState(aboutContent);
 
+    // Profile States
+    const [newPass, setNewPass] = useState('');
+    const [newPhoto, setNewPhoto] = useState(currentUser?.photoUrl || '');
+
     // Event Form State
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
     const [evtTitle, setEvtTitle] = useState('');
@@ -33,7 +37,7 @@ const AdminDashboard: React.FC = () => {
     const [evtDate, setEvtDate] = useState('');
     const [evtVenue, setEvtVenue] = useState('');
     const [evtCategory, setEvtCategory] = useState('General');
-    const [evtHostClub, setEvtHostClub] = useState('Rotaract RSCOE');
+    const [evtHostClub, setEvtHostClub] = useState('Rotaract club of RSCOE');
     const [evtRegEnabled, setEvtRegEnabled] = useState(true);
     const [evtUpcoming, setEvtUpcoming] = useState(false);
 
@@ -81,7 +85,7 @@ const AdminDashboard: React.FC = () => {
             await addPublicEvent(eventData);
         }
 
-        setEvtTitle(''); setEvtDesc(''); setEvtImg(''); setEvtDate(''); setEvtVenue(''); setEvtCategory('General'); setEvtHostClub('Rotaract RSCOE');
+        setEvtTitle(''); setEvtDesc(''); setEvtImg(''); setEvtDate(''); setEvtVenue(''); setEvtCategory('General'); setEvtHostClub('Rotaract club of RSCOE');
         alert('Event saved successfully!');
     };
 
@@ -89,6 +93,16 @@ const AdminDashboard: React.FC = () => {
         await updateSettings(tempSettings);
         await updateAboutContent(tempAbout);
         alert('Application settings updated!');
+    };
+
+    const handleProfileUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentUser) return;
+        const updates: any = { photoUrl: newPhoto };
+        if (newPass) updates.password = newPass;
+        await updateMember(currentUser.id, updates);
+        setNewPass('');
+        alert('Profile details updated!');
     };
 
     const chartData = Object.values(ActivityType).map(type => ({
@@ -105,6 +119,7 @@ const AdminDashboard: React.FC = () => {
         { id: 'feedback', label: 'Feedback', icon: <path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /> },
         { id: 'communications', label: 'Communications', icon: <path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /> },
         { id: 'settings', label: 'App Settings', icon: <><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></> },
+        { id: 'profile', label: 'My Identity', icon: <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> },
     ];
 
     return (
@@ -153,6 +168,61 @@ const AdminDashboard: React.FC = () => {
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'profile' && currentUser && (
+                    <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
+                        <Card title="Identity Management">
+                            <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800">
+                                <p className="text-[10px] font-black uppercase text-gray-500 mb-2 tracking-[0.2em] ml-1 text-center">Account Record</p>
+                                <div className="text-center space-y-2">
+                                    <h4 className="text-3xl font-black text-white uppercase tracking-tighter">{currentUser.name}</h4>
+                                    <div className="flex justify-center gap-2">
+                                        {currentUser.positions?.map(p => (
+                                            <span key={p} className="bg-gray-800 text-teal-400 border border-teal-500/10 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{p}</span>
+                                        ))}
+                                    </div>
+                                    <p className="text-[9px] text-gray-600 font-bold uppercase mt-6 italic tracking-widest leading-relaxed">Identity Lock: Name and Position are fixed. For any updates, contact System Administrator.</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleProfileUpdate} className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Photo URL (GitHub Raw)</label>
+                                    <input 
+                                        type="text" 
+                                        value={newPhoto}
+                                        onChange={e => setNewPhoto(e.target.value)}
+                                        placeholder="https://raw.githubusercontent.com/..." 
+                                        className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                    />
+                                    <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10 text-left">
+                                        <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
+                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            Guide: Creating a Git Raw Link
+                                        </h5>
+                                        <ol className="text-[11px] text-gray-500 space-y-2 ml-1">
+                                            <li>1. Upload your photo to a public GitHub Repository.</li>
+                                            <li>2. Open the file in the browser and click the <span className="text-white font-bold">"Raw"</span> button.</li>
+                                            <li>3. Copy the URL from the address bar (it should start with <code className="text-teal-500">raw.githubusercontent.com</code>).</li>
+                                            <li>4. Paste it here to update your dashboard avatar.</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Update Access Pin (Password)</label>
+                                    <input 
+                                        type="password" 
+                                        value={newPass}
+                                        onChange={e => setNewPass(e.target.value)}
+                                        placeholder="Leave empty to keep current" 
+                                        className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                    />
+                                </div>
+                                <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Access</button>
+                            </form>
+                        </Card>
                     </div>
                 )}
 

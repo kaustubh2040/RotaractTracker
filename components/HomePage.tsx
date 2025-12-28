@@ -295,7 +295,8 @@ const HomePage: React.FC = () => {
             </section>
 
             <footer className="py-20 bg-gray-900 border-t border-gray-800 text-center">
-                <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-6">{settings.appName}</h2>
+                <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-2">{settings.appName}</h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-6">{settings.appSubtitle}</p>
                 <div className="mt-12 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">&copy; 2025 • Built by <span className="text-teal-400">Kaustubh Patil</span> • All rights reserved</div>
             </footer>
         </div>

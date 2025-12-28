@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import PendingApprovals from './PendingApprovals';
 import Leaderboard from './Leaderboard';
 import { useClubData } from '../hooks/useClubData';
@@ -23,6 +24,15 @@ const AdminDashboard: React.FC = () => {
     // Settings States
     const [tempSettings, setTempSettings] = useState(settings);
     const [tempAbout, setTempAbout] = useState(aboutContent);
+
+    // Synchronize local edit state with context when context finishes loading
+    useEffect(() => {
+        setTempSettings(settings);
+    }, [settings]);
+
+    useEffect(() => {
+        setTempAbout(aboutContent);
+    }, [aboutContent]);
 
     // Profile States
     const [newPass, setNewPass] = useState('');

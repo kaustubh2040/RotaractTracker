@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
@@ -175,8 +176,14 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSettings(prev => ({ ...prev, ...newSettings }));
         if (dbStatus === 'connected' && supabase) {
             for (const [key, value] of Object.entries(newSettings)) {
-                let dbKey = key === 'clubLogoUrl' ? 'club_logo_url' : key === 'appName' ? 'app_name' : 'app_subtitle';
-                await supabase.from('settings').upsert({ key: dbKey, value });
+                let dbKey = '';
+                if (key === 'clubLogoUrl') dbKey = 'club_logo_url';
+                else if (key === 'appName') dbKey = 'app_name';
+                else if (key === 'appSubtitle') dbKey = 'app_subtitle';
+
+                if (dbKey) {
+                    await supabase.from('settings').upsert({ key: dbKey, value });
+                }
             }
         }
     };

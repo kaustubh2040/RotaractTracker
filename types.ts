@@ -16,6 +16,8 @@ export interface User {
   name: string;
   role: 'admin' | 'member';
   password: string;
+  positions?: string[]; // Max 2
+  photoUrl?: string;
 }
 
 export interface Activity {
@@ -75,8 +77,21 @@ export interface PublicEvent {
     imageUrl: string;
     date: string;
     venue: string;
+    category: string;
+    hostClub: string;
     registrationEnabled: boolean;
     isUpcoming: boolean;
+}
+
+export interface EventRegistration {
+    id: string;
+    eventId: string;
+    eventTitle: string;
+    eventDate: string;
+    name: string;
+    email: string;
+    phone: string;
+    createdAt: string;
 }
 
 export interface MemberStats {

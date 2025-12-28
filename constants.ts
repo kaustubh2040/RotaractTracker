@@ -3,17 +3,41 @@ import type { User, Activity } from './types';
 import { ActivityType, ActivityStatus } from './types';
 
 export const USERS: User[] = [
-  { id: 'admin', name: 'Dr. Evelyn Reed', role: 'admin', password: '123' },
-  { id: 'user1', name: 'Alice Johnson', role: 'member', password: '123' },
-  { id: 'user2', name: 'Bob Williams', role: 'member', password: '123' },
-  { id: 'user3', name: 'Charlie Brown', role: 'member', password: '123' },
-  { id: 'user4', name: 'Diana Miller', role: 'member', password: '123' },
-  { id: 'user5', name: 'Ethan Davis', role: 'member', password: '123' },
-  { id: 'user6', name: 'Fiona Garcia', role: 'member', password: '123' },
-  { id: 'user7', name: 'George Rodriguez', role: 'member', password: '123' },
-  { id: 'user8', name: 'Hannah Wilson', role: 'member', password: '123' },
-  { id: 'user9', name: 'Ian Martinez', role: 'member', password: '123' },
-  { id: 'user10', name: 'Jane Anderson', role: 'member', password: '123' },
+  { id: 'admin', name: 'Dr. Evelyn Reed', role: 'admin', password: '123', positions: ['President'] },
+  { id: 'user1', name: 'Alice Johnson', role: 'member', password: '123', positions: ['Secretary'] },
+  { id: 'user2', name: 'Bob Williams', role: 'member', password: '123', positions: ['Vice President'] },
+];
+
+export const BOD_POSITIONS = [
+  "President",
+  "Secretary",
+  "Joint Secretary",
+  "Vice President",
+  "Treasurer",
+  "Finance Director",
+  "Sergeant-At-Arms",
+  "Immediate Past President",
+  "Club Mentor",
+  "Club Learning Facilitator",
+  "Club Service Director",
+  "Joint Club Service Director",
+  "Professional Development Director",
+  "Joint Professional Development Director",
+  "Community Service Director",
+  "Joint Community Service Director",
+  "International Service Director",
+  "Joint International Service Director",
+  "World Rotaract Week Chairperson",
+  "Public Relations Officer",
+  "Public Image Director",
+  "Joint Public Relations Officer",
+  "Rotary Rotaract Relationship Officer",
+  "Diversity, Equity & Inclusivity Representative",
+  "Professional Assistance Officer",
+  "Membership Development Director",
+  "Sports Head",
+  "Editor",
+  "Joint Editor"
 ];
 
 export const ACTIVITY_POINTS: Record<ActivityType, number> = {
@@ -25,5 +49,4 @@ export const ACTIVITY_POINTS: Record<ActivityType, number> = {
 export const INITIAL_ACTIVITIES: Activity[] = [
   { id: 'act1', userId: 'user1', userName: 'Alice Johnson', type: ActivityType.EVENT_HOSTING, description: 'Hosted the Annual Charity Bake Sale', date: '2023-10-05', submittedAt: '2023-10-06', points: 20, status: ActivityStatus.APPROVED },
   { id: 'act2', userId: 'user2', userName: 'Bob Williams', type: ActivityType.EVENT_ATTENDANCE, description: 'Volunteered at the community cleanup drive', date: '2023-10-06', submittedAt: '2023-10-06', points: 15, status: ActivityStatus.APPROVED },
-  { id: 'act3', userId: 'user3', userName: 'Charlie Brown', type: ActivityType.MEETING_ATTENDANCE, description: 'Attended October monthly meeting', date: '2023-10-02', submittedAt: '2023-10-03', points: 15, status: ActivityStatus.APPROVED },
 ];

@@ -48,8 +48,10 @@ const Header: React.FC = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             setCurrentPage('home');
-            // Small delay to allow page transition before scrolling if needed
-            setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+            // Small delay to allow the React state change to settle before scrolling
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
         }
     };
 

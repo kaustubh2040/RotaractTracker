@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
@@ -207,6 +206,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const updatePublicEvent = async (id: string, updates: Partial<PublicEvent>) => {
         if (dbStatus === 'connected' && supabase) {
+            // Fix: Mapping camelCase updates properties to snake_case for database fields.
             const dbUpdates: any = {
                 title: updates.title,
                 description: updates.description,
@@ -296,6 +296,23 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setUsers(prev => [...prev, newUser]);
     };
 
+    const deleteMember = async (userId: string) => {
+        if (dbStatus === 'connected' && supabase) {
+            // Permanent deletion from database
+            // Note: foreign keys (user_id) should handle cascading in the DB
+            // If they don't, manually deleting them here is safer
+            await supabase.from('users').delete().eq('id', userId);
+        }
+        
+        // Update local state permanently
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        
+        // Remove all related records from local state to maintain consistency
+        setActivities(prev => prev.filter(a => a.userId !== userId));
+        setNotifications(prev => prev.filter(n => n.userId !== userId));
+        setFeedbacks(prev => prev.filter(f => f.userId !== userId));
+    };
+
     const addAnnouncement = async (text: string) => {
         const newAnn: Announcement = { id: `ann${Date.now()}`, text, author: currentUser?.name || 'Admin', createdAt: new Date().toISOString() };
         if (dbStatus === 'connected' && supabase) {
@@ -342,7 +359,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             currentUser, login, logout, users, members: users.filter(u => u.role === 'member'), activities, 
             announcements, notifications, feedbacks, settings, aboutContent, publicEvents, registrations, currentPage, setCurrentPage,
             updateSettings, updateAboutContent, addPublicEvent, updatePublicEvent, deletePublicEvent,
-            addActivity, updateActivityStatus, updateMember, addMember, deleteMember: async (id) => setUsers(u => u.filter(x => x.id !== id)),
+            addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
             addAnnouncement, sendNotification, addFeedback, replyToFeedback, registerVisitor, memberStats, loading, dbStatus
         }}>
             {children}

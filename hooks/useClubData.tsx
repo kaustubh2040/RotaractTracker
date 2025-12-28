@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
@@ -112,7 +111,14 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: regData } = await supabase.from('event_registrations').select('*');
                     if (regData) setRegistrations(regData.map(r => ({
-                        id: r.id, event_id: r.event_id, event_title: r.event_title, event_date: r.event_date, name: r.name, email: r.email, phone: r.phone, created_at: r.created_at
+                        id: r.id, 
+                        eventId: r.event_id, 
+                        eventTitle: r.event_title, 
+                        eventDate: r.event_date, 
+                        name: r.name, 
+                        email: r.email, 
+                        phone: r.phone, 
+                        createdAt: r.created_at
                     })));
 
                     // Fetch Global Settings

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
@@ -78,7 +77,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 try {
                     const { data: userData } = await supabase.from('users').select('*');
                     if (userData && userData.length > 0) {
-                        setUsers(userData.map(u => ({ ...u, positions: u.positions || [], photoUrl: u.photo_url || '' })));
+                        setUsers(userData.map(u => ({ ...u, id: u.id.toString(), positions: u.positions || [], photoUrl: u.photo_url || '' })));
                     } else { 
                         await supabase.from('users').upsert(USERS); 
                         setUsers(USERS); 
@@ -102,7 +101,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: eventData } = await supabase.from('public_events').select('*').order('date', { ascending: false });
                     if (eventData) setPublicEvents(eventData.map(e => ({
-                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, category: e.category || 'General', hostClub: e.host_club || 'Rotaract RSCOE', registrationEnabled: e.registration_enabled, isUpcoming: e.is_upcoming
+                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, category: e.category || 'General', hostClub: e.host_club || 'Rotaract club of RSCOE', registrationEnabled: e.registration_enabled, isUpcoming: e.is_upcoming
                     })));
 
                     const { data: regData } = await supabase.from('event_registrations').select('*');
@@ -110,16 +109,39 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         id: r.id, eventId: r.event_id, eventTitle: r.event_title, eventDate: r.event_date, name: r.name, email: r.email, phone: r.phone, createdAt: r.created_at
                     })));
 
+                    // Fetch Global Settings
+                    const { data: settingsData } = await supabase.from('settings').select('*');
+                    if (settingsData) {
+                        const sMap: Record<string, any> = {};
+                        settingsData.forEach(row => sMap[row.key] = row.value);
+                        
+                        setSettings(prev => ({
+                            ...prev,
+                            appName: sMap.app_name || prev.appName,
+                            appSubtitle: sMap.app_subtitle || prev.appSubtitle,
+                            clubLogoUrl: sMap.club_logo_url || prev.clubLogoUrl
+                        }));
+
+                        if (sMap.about_content) {
+                            try {
+                                setAboutContent(JSON.parse(sMap.about_content));
+                            } catch (e) {
+                                console.error("Error parsing about_content JSON", e);
+                            }
+                        }
+                    }
+
                     setDbStatus('connected');
                     if (savedSession) {
                         const parsed = JSON.parse(savedSession);
-                        const user = (userData || users).find((u: any) => u.id === parsed.id);
+                        const user = (userData || users).find((u: any) => u.id.toString() === parsed.id.toString());
                         if (user) { 
-                            setCurrentUser({ ...user, positions: user.positions || [], photoUrl: user.photo_url || '' }); 
+                            setCurrentUser({ ...user, id: user.id.toString(), positions: user.positions || [], photoUrl: user.photo_url || '' }); 
                             setCurrentPage('dashboard'); 
                         }
                     }
                 } catch (e) {
+                    console.error("Supabase init error:", e);
                     setDbStatus('error');
                 }
             } else {

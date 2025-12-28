@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PendingApprovals from './PendingApprovals';
 import Leaderboard from './Leaderboard';

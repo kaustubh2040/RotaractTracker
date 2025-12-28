@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
         return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
     });
 
-    // Only show top 2 on home page (President and Secretary)
+    // Only show top 2 on home page: President (0) and Secretary (1)
     const homeBOD = bodLeadership.slice(0, 2);
 
     const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -164,37 +164,37 @@ const HomePage: React.FC = () => {
                         Building the future with <span className="text-teal-400 font-bold">Rotaract</span>.
                     </p>
                     <div className="mt-12 flex justify-center items-center">
-                        <button onClick={() => setCurrentPage('login')} className="w-full sm:w-auto px-12 py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-full transition-all shadow-2xl active:scale-95">Join Community</button>
+                        <button onClick={() => setCurrentPage('login')} className="w-full sm:w-auto px-12 py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-full transition-all shadow-2xl active:scale-95 text-sm">Join Community</button>
                     </div>
                 </div>
             </section>
 
-            {/* Board of Directors Showcase (Properly Centered and Restricted to Top 2) */}
+            {/* Board of Directors Showcase - Centered & Top 2 Only */}
             <section className="py-24 bg-gray-900 overflow-hidden border-b border-gray-800">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Leadership Team</h3>
-                        <h2 className="text-4xl lg:text-5xl font-black text-white uppercase tracking-tight">Board of Directors</h2>
-                        <div className="w-20 h-1 bg-teal-500 mx-auto mt-6 rounded-full"></div>
+                    <div className="text-center mb-16 max-w-2xl mx-auto">
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-teal-400 mb-3">Leadership Team</h3>
+                        <h2 className="text-4xl lg:text-5xl font-black text-white uppercase tracking-tight leading-none mb-6">Board of Directors</h2>
+                        <div className="w-24 h-1 bg-teal-500 mx-auto rounded-full shadow-[0_0_15px_rgba(20,184,166,0.5)]"></div>
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-8 lg:gap-12 max-w-7xl mx-auto mb-16">
+                    <div className="flex flex-wrap justify-center gap-8 lg:gap-16 max-w-5xl mx-auto mb-20">
                         {homeBOD.map(member => (
                             <div key={member.id} className="group relative w-full sm:w-72 lg:w-80">
-                                <div className="relative aspect-[4/5] bg-gray-800 rounded-[2.5rem] overflow-hidden border border-gray-700 group-hover:border-teal-500/50 transition-all duration-500 shadow-2xl group-hover:-translate-y-4">
+                                <div className="relative aspect-[4/5] bg-gray-800 rounded-[3rem] overflow-hidden border border-gray-700 group-hover:border-teal-500/50 transition-all duration-500 shadow-2xl group-hover:-translate-y-4">
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent z-10"></div>
                                     {member.photoUrl ? (
                                         <img src={member.photoUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={member.name} />
                                     ) : (
-                                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                                            <svg className="w-20 h-20 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                        <div className="w-full h-full bg-gray-950 flex items-center justify-center">
+                                            <svg className="w-24 h-24 text-gray-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                                         </div>
                                     )}
-                                    <div className="absolute bottom-6 left-6 right-6 z-20">
-                                        <h4 className="text-xl font-black text-white uppercase tracking-tight mb-1 group-hover:text-teal-400 transition-colors">{member.name}</h4>
-                                        <div className="flex flex-wrap gap-1">
+                                    <div className="absolute bottom-10 left-8 right-8 z-20">
+                                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 group-hover:text-teal-400 transition-colors leading-none">{member.name}</h4>
+                                        <div className="flex flex-wrap gap-2">
                                             {member.positions?.map(pos => (
-                                                <span key={pos} className="bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-teal-500/30">{pos}</span>
+                                                <span key={pos} className="bg-teal-500/10 text-teal-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-teal-500/20">{pos}</span>
                                             ))}
                                         </div>
                                     </div>
@@ -206,10 +206,10 @@ const HomePage: React.FC = () => {
                     <div className="flex justify-center">
                         <button 
                             onClick={() => setCurrentPage('bod-all')}
-                            className="group flex items-center space-x-3 px-10 py-4 bg-gray-800 hover:bg-teal-600 text-teal-400 hover:text-white border border-teal-500/20 font-black uppercase tracking-widest text-[11px] rounded-full transition-all shadow-xl active:scale-95"
+                            className="group flex items-center space-x-3 px-12 py-5 bg-gray-800 hover:bg-teal-600 text-teal-400 hover:text-white border border-teal-500/30 font-black uppercase tracking-[0.2em] text-[11px] rounded-full transition-all shadow-2xl active:scale-95"
                         >
                             <span>Explore Full Leadership Cabinet</span>
-                            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
                         </button>

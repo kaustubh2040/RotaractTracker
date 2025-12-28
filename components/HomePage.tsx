@@ -160,6 +160,11 @@ const HomePage: React.FC = () => {
             <section className="relative py-24 lg:py-40 overflow-hidden bg-gray-900 border-b border-gray-800">
                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px]"></div>
                 <div className="container mx-auto px-6 relative z-10 text-center">
+                    {settings.clubLogoUrl && (
+                        <div className="flex justify-center mb-8">
+                            <img src={settings.clubLogoUrl} alt="Logo" className="h-24 w-24 sm:h-32 sm:w-32 object-contain bg-gray-900/50 p-2 rounded-2xl border border-gray-800 shadow-2xl animate-float" />
+                        </div>
+                    )}
                     <h1 className="text-7xl lg:text-[10rem] font-black text-white tracking-tighter uppercase mb-2 drop-shadow-2xl">
                         {settings.appName}
                     </h1>

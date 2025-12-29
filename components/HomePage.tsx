@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useClubData } from '../hooks/useClubData';
 import { PublicEvent, User } from '../types';
@@ -53,6 +52,68 @@ const HomePage: React.FC = () => {
     };
 
     if (selectedEvent) {
+        const isPastEvent = new Date(selectedEvent.date) < today;
+
+        if (isPastEvent) {
+            return (
+                <div className="animate-fadeIn bg-gray-900 min-h-screen pb-20 pt-12">
+                    <div className="container mx-auto px-6 lg:px-24">
+                        <button 
+                            onClick={() => { setSelectedEvent(null); setRegStatus('idle'); }}
+                            className="mb-10 flex items-center text-teal-400 hover:text-white transition-colors uppercase text-[10px] font-black tracking-widest group"
+                        >
+                            <svg className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Home
+                        </button>
+                        
+                        <div className="max-w-5xl mx-auto space-y-12">
+                            {/* 1. Full event image (complete, not cropped) */}
+                            <div className="rounded-[2.5rem] overflow-hidden border border-gray-700 shadow-2xl bg-gray-800 flex justify-center">
+                                <img src={selectedEvent.imageUrl} className="w-full h-auto object-contain max-h-[80vh]" alt={selectedEvent.title} />
+                            </div>
+
+                            <div className="bg-gray-800/40 p-8 lg:p-16 rounded-[3rem] border border-gray-700 shadow-xl">
+                                {/* 2. Event Name */}
+                                <h2 className="text-4xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 leading-none">
+                                    {selectedEvent.title}
+                                </h2>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 pb-12 border-b border-gray-700/50">
+                                    {/* 3. Event Date */}
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Impact Date</p>
+                                        <p className="text-teal-400 font-black uppercase text-sm tracking-widest">{new Date(selectedEvent.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    </div>
+                                    {/* 4. Category */}
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Category</p>
+                                        <p className="text-white font-black uppercase text-sm tracking-widest">{selectedEvent.category}</p>
+                                    </div>
+                                    {/* 5. Host Club */}
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Host Club</p>
+                                        <p className="text-white font-black uppercase text-sm tracking-widest">{selectedEvent.hostClub}</p>
+                                    </div>
+                                </div>
+
+                                {/* 6. FULL event description */}
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
+                                        <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Archive
+                                    </h3>
+                                    <p className="text-gray-300 text-lg lg:text-xl leading-relaxed whitespace-pre-wrap font-light">
+                                        {selectedEvent.description}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="animate-fadeIn bg-gray-900 min-h-screen pb-20">
                 <div className="relative h-[40vh] lg:h-[50vh] w-full overflow-hidden">
@@ -234,9 +295,11 @@ const HomePage: React.FC = () => {
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
                                 </div>
                                 <div className="p-6">
-                                    <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest">{new Date(event.date).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
-                                    <h4 className="text-lg font-black text-white mt-2 group-hover:text-teal-400 transition-colors uppercase">{event.title}</h4>
-                                    <p className="text-sm text-gray-500 mt-3 line-clamp-2 leading-relaxed font-light italic">"{event.category}"</p>
+                                    <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest">{new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                    <h4 className="text-lg font-black text-white mt-2 group-hover:text-teal-400 transition-colors uppercase leading-tight">{event.title}</h4>
+                                    <p className="text-[11px] text-gray-500 mt-4 line-clamp-3 leading-relaxed font-medium">
+                                        {event.description}
+                                    </p>
                                 </div>
                             </div>
                         )) : (

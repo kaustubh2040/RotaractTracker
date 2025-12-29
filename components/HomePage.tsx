@@ -289,8 +289,12 @@ const HomePage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {recentEvents.length > 0 ? recentEvents.map(event => (
-                            <div key={event.id} className="group bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 hover:border-teal-500/50 transition-all hover:-translate-y-2">
-                                <div className="h-48 overflow-hidden relative cursor-pointer" onClick={() => setSelectedEvent(event)}>
+                            <div 
+                                key={event.id} 
+                                className="group bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 hover:border-teal-500/50 transition-all hover:-translate-y-2 cursor-pointer"
+                                onClick={() => setSelectedEvent(event)}
+                            >
+                                <div className="h-48 overflow-hidden relative">
                                     <img src={event.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={event.title} />
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
                                 </div>

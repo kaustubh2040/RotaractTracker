@@ -61,7 +61,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
     const [publicEvents, setPublicEvents] = useState<PublicEvent[]>([]);
     const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
-    const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'ACTRA', appSubtitle: 'BY ROTARACT CLUB OF RSCOE' });
+    const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'ACTRA', appSubtitle: 'BY ROTARACT CLUB OF RSCOE', aboutGroupImageUrl: '' });
     const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all'>('home');
@@ -131,7 +131,8 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                             ...prev,
                             appName: sMap.app_name || prev.appName,
                             appSubtitle: sMap.app_subtitle || prev.appSubtitle,
-                            clubLogoUrl: sMap.club_logo_url || prev.clubLogoUrl
+                            clubLogoUrl: sMap.club_logo_url || prev.clubLogoUrl,
+                            aboutGroupImageUrl: sMap.about_group_image_url || prev.aboutGroupImageUrl
                         }));
 
                         if (sMap.about_content) {
@@ -191,6 +192,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 if (key === 'clubLogoUrl') dbKey = 'club_logo_url';
                 else if (key === 'appName') dbKey = 'app_name';
                 else if (key === 'appSubtitle') dbKey = 'app_subtitle';
+                else if (key === 'aboutGroupImageUrl') dbKey = 'about_group_image_url';
 
                 if (dbKey) {
                     await supabase.from('settings').upsert({ key: dbKey, value });

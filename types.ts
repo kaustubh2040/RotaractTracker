@@ -1,4 +1,3 @@
-
 export enum ActivityType {
   EVENT_ATTENDANCE = 'Event Attendance',
   MEETING_ATTENDANCE = 'Meeting Attendance',
@@ -61,6 +60,7 @@ export interface AppSettings {
   clubLogoUrl: string;
   appName: string;
   appSubtitle: string;
+  aboutGroupImageUrl?: string;
 }
 
 export interface AboutContent {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PendingApprovals from './PendingApprovals';
 import Leaderboard from './Leaderboard';
@@ -261,6 +260,15 @@ const AdminDashboard: React.FC = () => {
                                         value={tempSettings.clubLogoUrl} 
                                         onChange={e => setTempSettings({...tempSettings, clubLogoUrl: e.target.value})} 
                                         className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">About Section – Group Image URL</label>
+                                    <input 
+                                        value={tempSettings.aboutGroupImageUrl || ''} 
+                                        onChange={e => setTempSettings({...tempSettings, aboutGroupImageUrl: e.target.value})} 
+                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                        placeholder="Optional: Provide a Raw Image URL for the About section"
                                     />
                                 </div>
                             </div>

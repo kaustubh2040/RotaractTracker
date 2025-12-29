@@ -58,16 +58,6 @@ const HomePage: React.FC = () => {
             return (
                 <div className="animate-fadeIn bg-gray-900 min-h-screen pb-20 pt-12">
                     <div className="container mx-auto px-6 lg:px-24">
-                        <button 
-                            onClick={() => { setSelectedEvent(null); setRegStatus('idle'); }}
-                            className="mb-10 flex items-center text-teal-400 hover:text-white transition-colors uppercase text-[10px] font-black tracking-widest group"
-                        >
-                            <svg className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Home
-                        </button>
-                        
                         <div className="max-w-5xl mx-auto space-y-12">
                             {/* 1. Full event image (complete, not cropped) */}
                             <div className="rounded-[2.5rem] overflow-hidden border border-gray-700 shadow-2xl bg-gray-800 flex justify-center">
@@ -107,6 +97,19 @@ const HomePage: React.FC = () => {
                                         {selectedEvent.description}
                                     </p>
                                 </div>
+                            </div>
+
+                            {/* Back to Home moved to bottom center */}
+                            <div className="flex justify-center pt-8">
+                                <button 
+                                    onClick={() => { setSelectedEvent(null); setRegStatus('idle'); }}
+                                    className="flex items-center text-teal-400 hover:text-white transition-colors uppercase text-[10px] font-black tracking-widest group bg-gray-800/50 px-8 py-4 rounded-full border border-gray-700 hover:border-teal-500/50"
+                                >
+                                    <svg className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    </svg>
+                                    Back to Home
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -186,7 +189,8 @@ const HomePage: React.FC = () => {
                                 ) : (
                                     <form onSubmit={handleRegisterSubmit} className="space-y-6">
                                         <div className="mb-8">
-                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight">Register Now</h4>
+                                            {/* Updated text to mention event name */}
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight leading-tight">Register for {selectedEvent.title}</h4>
                                             <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Join the impact movement</p>
                                         </div>
                                         <input required type="text" value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})} placeholder="Full Name" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium" />

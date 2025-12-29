@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useClubData } from '../hooks/useClubData';
 
@@ -34,6 +33,22 @@ const AboutPage: React.FC = () => {
                     <p className="text-gray-300 leading-relaxed text-lg whitespace-pre-wrap">
                         {aboutContent.intro}
                     </p>
+                </div>
+
+                {/* Group Image Section - NEW */}
+                <div className="max-w-6xl mx-auto mb-16">
+                    <div className="relative group rounded-[3rem] overflow-hidden border-2 border-gray-800 shadow-2xl transition-all duration-500 hover:border-teal-500/30">
+                        <img 
+                            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" 
+                            alt="Club Team Impact" 
+                            className="w-full h-auto object-cover max-h-[600px] transition-transform duration-700 group-hover:scale-[1.02]"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+                        <div className="absolute bottom-10 left-10 z-10">
+                            <h4 className="text-white text-3xl font-black uppercase tracking-tighter">Unified Leadership</h4>
+                            <p className="text-teal-400 font-black uppercase text-[10px] tracking-[0.4em] mt-2">Making a difference together</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">

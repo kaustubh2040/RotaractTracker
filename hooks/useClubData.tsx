@@ -106,7 +106,16 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: eventData } = await supabase.from('public_events').select('*').order('date', { ascending: false });
                     if (eventData) setPublicEvents(eventData.map(e => ({
-                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, category: e.category || 'General', hostClub: e.host_club || 'Rotaract club of RSCOE', registration_enabled: e.registration_enabled, is_upcoming: e.is_upcoming
+                        id: e.id, 
+                        title: e.title, 
+                        description: e.description, 
+                        imageUrl: e.image_url, 
+                        date: e.date, 
+                        venue: e.venue, 
+                        category: e.category || 'General', 
+                        hostClub: e.host_club || 'Rotaract club of RSCOE', 
+                        registrationEnabled: e.registration_enabled, 
+                        isUpcoming: e.is_upcoming
                     })));
 
                     const { data: regData } = await supabase.from('event_registrations').select('*');

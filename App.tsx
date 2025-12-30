@@ -13,6 +13,11 @@ import ContactPage from './components/ContactPage';
 const AppContent: React.FC = () => {
     const { currentUser, loading, currentPage } = React.useContext(ClubDataContext);
 
+    // Synchronize scroll position on navigation
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [currentPage]);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center">

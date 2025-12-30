@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
+import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES, BOD_POSITIONS } from '../constants';
@@ -64,9 +64,33 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'ACTRA', appSubtitle: 'BY ROTARACT CLUB OF RSCOE', aboutGroupImageUrl: '' });
     const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact'>('home');
+    const [currentPage, _setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact'>('home');
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
+
+    // Enhanced navigation with History API sync
+    const setCurrentPage = useCallback((page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact') => {
+        _setCurrentPage(page);
+        if (window.history.state?.page !== page) {
+            window.history.pushState({ page }, "", "");
+        }
+    }, []);
+
+    useEffect(() => {
+        // Initial history state establish
+        if (!window.history.state) {
+            window.history.replaceState({ page: 'home' }, "", "");
+        }
+
+        const handlePopState = (event: PopStateEvent) => {
+            if (event.state && event.state.page) {
+                _setCurrentPage(event.state.page);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     useEffect(() => {
         const init = async () => {
@@ -174,7 +198,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setLoading(false);
         };
         init();
-    }, []);
+    }, [setCurrentPage]);
 
     const login = (userId: string, password: string): boolean => {
         const user = users.find(u => u.id === userId);

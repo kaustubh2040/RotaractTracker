@@ -91,6 +91,12 @@ const Header: React.FC = () => {
                     >
                         About
                     </button>
+                    <button 
+                        onClick={() => setCurrentPage('contact')}
+                        className={`text-[10px] font-black uppercase tracking-[0.2em] ${currentPage === 'contact' ? 'text-teal-400 border-b-2 border-teal-500 pb-1' : 'text-gray-400 hover:text-white'} transition-all`}
+                    >
+                        Contact
+                    </button>
                     {currentUser && (
                         <>
                             <button 

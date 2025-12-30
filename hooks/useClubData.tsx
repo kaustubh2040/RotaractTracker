@@ -18,8 +18,8 @@ interface ClubDataContextType {
     aboutContent: AboutContent;
     publicEvents: PublicEvent[];
     registrations: EventRegistration[];
-    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all';
-    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all') => void;
+    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact';
+    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact') => void;
     updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
     updateAboutContent: (content: AboutContent) => Promise<void>;
     addPublicEvent: (event: Omit<PublicEvent, 'id'>) => Promise<void>;
@@ -64,7 +64,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'ACTRA', appSubtitle: 'BY ROTARACT CLUB OF RSCOE', aboutGroupImageUrl: '' });
     const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all'>('home');
+    const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact'>('home');
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
 
@@ -106,7 +106,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: eventData } = await supabase.from('public_events').select('*').order('date', { ascending: false });
                     if (eventData) setPublicEvents(eventData.map(e => ({
-                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, category: e.category || 'General', hostClub: e.host_club || 'Rotaract club of RSCOE', registrationEnabled: e.registration_enabled, isUpcoming: e.is_upcoming
+                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, date: e.date, venue: e.venue, category: e.category || 'General', hostClub: e.host_club || 'Rotaract club of RSCOE', registration_enabled: e.registration_enabled, is_upcoming: e.is_upcoming
                     })));
 
                     const { data: regData } = await supabase.from('event_registrations').select('*');
@@ -220,6 +220,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const updatePublicEvent = async (id: string, updates: Partial<PublicEvent>) => {
         if (dbStatus === 'connected' && supabase) {
+            // Fix: Corrected property access to hostClub as host_club does not exist on type 'Partial<PublicEvent>'.
             const dbUpdates: any = {
                 title: updates.title,
                 description: updates.description,

@@ -13,7 +13,7 @@ const AboutPage: React.FC = () => {
                     <div className="absolute top-10 left-10 w-96 h-96 bg-teal-500 blur-[150px] rounded-full"></div>
                 </div>
                 <div className="container mx-auto px-6 relative z-10 text-center">
-                    <Reveal>
+                    <Reveal instant={true}>
                         <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">Official Profile</h2>
                         <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-tight">
                             About <br/>
@@ -28,7 +28,7 @@ const AboutPage: React.FC = () => {
 
             {/* Content Sections */}
             <div className="container mx-auto px-6 mt-16 space-y-16">
-                <Reveal>
+                <Reveal instant={true}>
                     <div className="max-w-4xl mx-auto bg-gray-800/50 p-8 lg:p-12 rounded-[2rem] border border-gray-700 shadow-2xl">
                         <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-6 flex items-center">
                             <span className="w-8 h-px bg-teal-500 mr-4"></span>

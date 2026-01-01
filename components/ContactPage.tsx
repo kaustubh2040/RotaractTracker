@@ -56,7 +56,7 @@ const ContactPage: React.FC = () => {
                     <div className="absolute top-10 right-10 w-96 h-96 bg-teal-500 blur-[150px] rounded-full"></div>
                 </div>
                 <div className="container mx-auto px-6 relative z-10 text-center">
-                    <Reveal>
+                    <Reveal instant={true}>
                         <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">Get in Touch</h2>
                         <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-tight">
                             Connect with <br/>
@@ -73,7 +73,7 @@ const ContactPage: React.FC = () => {
             <div className="container mx-auto px-6 mt-20 max-w-5xl">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     {socialLinks.map((link, idx) => (
-                        <Reveal key={link.name} delay={idx * 100}>
+                        <Reveal key={link.name} delay={idx * 100} instant={true}>
                             <a
                                 href={link.url}
                                 target="_blank"

@@ -62,13 +62,13 @@ const HomePage: React.FC = () => {
                     <div className="container mx-auto px-6 lg:px-24">
                         <div className="max-w-5xl mx-auto space-y-12">
                             {/* 1. Full event image (complete, not cropped) */}
-                            <Reveal>
+                            <Reveal instant={true}>
                                 <div className="rounded-[2.5rem] overflow-hidden border border-gray-700 shadow-2xl bg-gray-800 flex justify-center">
                                     <img src={selectedEvent.imageUrl} className="w-full h-auto object-contain max-h-[80vh]" alt={selectedEvent.title} />
                                 </div>
                             </Reveal>
 
-                            <Reveal delay={200}>
+                            <Reveal delay={200} instant={true}>
                                 <div className="bg-gray-800/40 p-8 lg:p-16 rounded-[3rem] border border-gray-700 shadow-xl transition-all duration-500 hover:shadow-teal-500/5">
                                     {/* 2. Event Name */}
                                     <h2 className="text-4xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 leading-none">
@@ -159,7 +159,7 @@ const HomePage: React.FC = () => {
 
                 <div className="container mx-auto px-6 lg:px-24 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
                     <div className="lg:col-span-2 space-y-12">
-                        <Reveal>
+                        <Reveal instant={true}>
                             <div className="bg-gray-800/40 p-10 rounded-[2.5rem] border border-gray-700 shadow-xl hover:shadow-teal-500/5 transition-all duration-500">
                                 <h3 className="text-xl font-black text-white uppercase tracking-widest mb-8 flex items-center">
                                     <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Brief
@@ -182,7 +182,7 @@ const HomePage: React.FC = () => {
                     </div>
 
                     <div className="lg:col-span-1">
-                        <Reveal delay={200}>
+                        <Reveal delay={200} instant={true}>
                             {selectedEvent.registrationEnabled ? (
                                 <div className="bg-teal-500/5 p-10 rounded-[2.5rem] border border-teal-500/20 sticky top-28 shadow-2xl backdrop-blur-md transition-all duration-500 hover:border-teal-500/40">
                                     {regStatus === 'success' ? (
@@ -264,7 +264,7 @@ const HomePage: React.FC = () => {
             {/* Upcoming Impact - Auto-Filtered by Date */}
             <section className="py-24 bg-gray-800/20">
                 <div className="container mx-auto px-6">
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="text-center mb-16">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Next Steps</h3>
                             <h2 className="text-4xl font-black text-white uppercase tracking-tight">Upcoming Impact</h2>
@@ -273,7 +273,7 @@ const HomePage: React.FC = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                         {upcomingEvents.length > 0 ? upcomingEvents.map((event, idx) => (
-                            <Reveal key={event.id} delay={idx * 100}>
+                            <Reveal key={event.id} delay={idx * 100} instant={idx < 3}>
                                 <div className="group bg-gray-800 border border-gray-700 rounded-3xl overflow-hidden shadow-xl hover:border-teal-500/50 hover:shadow-teal-500/5 transition-all duration-500 flex flex-col h-full hover:-translate-y-2">
                                     <div className="h-56 overflow-hidden relative">
                                         <img src={event.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={event.title} />
@@ -315,7 +315,7 @@ const HomePage: React.FC = () => {
             {/* Recent Impact Portfolio */}
             <section className="py-24 bg-gray-900 border-t border-gray-800">
                 <div className="container mx-auto px-6">
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="text-center mb-16">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Portfolio</h3>
                             <h2 className="text-4xl font-black text-white uppercase tracking-tight">Recent Impact</h2>

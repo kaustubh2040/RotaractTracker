@@ -18,7 +18,7 @@ const BODPage: React.FC = () => {
         <div className="animate-fadeIn min-h-screen bg-gray-900 pb-24">
             <div className="relative py-24 bg-gray-800/40 border-b border-gray-800 overflow-hidden">
                 <div className="container mx-auto px-6 text-center">
-                    <Reveal>
+                    <Reveal instant={true}>
                         <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">The Official Board</h2>
                         <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tighter uppercase leading-none">
                             Leadership <span className="text-transparent bg-clip-text bg-gradient-to-tr from-teal-400 to-teal-200">Portfolio</span>
@@ -30,7 +30,7 @@ const BODPage: React.FC = () => {
             <div className="container mx-auto px-6 mt-20 max-w-7xl">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
                     {bodLeadership.map((member, idx) => (
-                        <Reveal key={member.id} delay={idx * 50}>
+                        <Reveal key={member.id} delay={idx * 50} instant={idx < 8}>
                             <div className="group flex flex-col h-full">
                                 <div className="relative aspect-[3/4] bg-gray-800 rounded-[3rem] overflow-hidden border-2 border-gray-800 group-hover:border-teal-500/40 transition-all duration-500 shadow-2xl shadow-black/50">
                                     {member.photoUrl ? (

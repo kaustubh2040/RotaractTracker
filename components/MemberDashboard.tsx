@@ -111,7 +111,7 @@ const MemberDashboard: React.FC = () => {
                 {activeTab === 'home' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
                         <div className="space-y-6">
-                            <Reveal>
+                            <Reveal instant={true}>
                                 <div className="bg-gray-800 p-8 rounded-[2.5rem] border border-gray-700 shadow-2xl relative overflow-hidden flex flex-col items-center text-center group transition-all duration-500 hover:border-teal-500/30">
                                     <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-teal-500/10 to-transparent"></div>
                                     <div className="w-20 h-20 rounded-2xl bg-gray-900 border-2 border-teal-500/30 overflow-hidden shadow-xl mb-4 relative z-10 group-hover:scale-110 transition-transform duration-500">
@@ -141,7 +141,7 @@ const MemberDashboard: React.FC = () => {
                                 </div>
                             </Reveal>
 
-                            <Reveal delay={200}>
+                            <Reveal instant={true} delay={200}>
                                 <Card title="Club Broadcasts">
                                     {loading ? (
                                         <div className="space-y-4">
@@ -151,7 +151,7 @@ const MemberDashboard: React.FC = () => {
                                     ) : announcements.length > 0 ? (
                                         <div className="space-y-4">
                                             {announcements.slice(0, 3).map((ann, idx) => (
-                                                <Reveal key={ann.id} delay={idx * 50}>
+                                                <Reveal key={ann.id} delay={idx * 50} instant={true}>
                                                     <div className="p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl transition-all hover:bg-teal-500/10 hover:border-teal-500/30">
                                                         <p className="text-sm text-gray-200 leading-relaxed italic pr-8">"{ann.text}"</p>
                                                         <div className="mt-4 flex justify-between items-center text-[9px] font-black uppercase text-gray-600 tracking-widest">
@@ -168,13 +168,13 @@ const MemberDashboard: React.FC = () => {
                         </div>
 
                         <div className="space-y-6">
-                            <Reveal delay={100}>
+                            <Reveal instant={true} delay={100}>
                                 <Card title="Latest Alerts">
                                     <div className="space-y-3">
                                         {loading ? (
                                             <Skeleton className="h-24 w-full" />
                                         ) : myNotifications.length > 0 ? myNotifications.slice(0, 5).map((not, idx) => (
-                                            <Reveal key={not.id} delay={idx * 50}>
+                                            <Reveal key={not.id} delay={idx * 50} instant={true}>
                                                 <div className="p-4 bg-gray-900/50 rounded-2xl flex items-start space-x-4 border border-gray-800 transition-all hover:border-teal-500/20">
                                                     <div className="mt-2 w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.6)] shrink-0"></div>
                                                     <div className="flex-1">
@@ -187,7 +187,7 @@ const MemberDashboard: React.FC = () => {
                                     </div>
                                 </Card>
                             </Reveal>
-                            <Reveal delay={300}>
+                            <Reveal instant={true} delay={300}>
                                 <Leaderboard />
                             </Reveal>
                         </div>
@@ -195,7 +195,7 @@ const MemberDashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'profile' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
                             <Card title="Identity Management">
                                 <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800 transition-all hover:border-teal-500/20">
@@ -298,9 +298,9 @@ const MemberDashboard: React.FC = () => {
                     </Reveal>
                 )}
 
-                {activeTab === 'report' && <Reveal><div className="animate-fadeIn max-w-2xl mx-auto"><ActivityForm /></div></Reveal>}
+                {activeTab === 'report' && <Reveal instant={true}><div className="animate-fadeIn max-w-2xl mx-auto"><ActivityForm /></div></Reveal>}
                 {activeTab === 'history' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <Card title="Personal Log History" className="animate-fadeIn">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
@@ -341,7 +341,7 @@ const MemberDashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'support' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="animate-fadeIn space-y-6">
                             <Card title="Speak with Leadership">
                                 <div className="mb-6 p-4 bg-teal-500/5 rounded-2xl border border-teal-500/10 transition-all hover:border-teal-500/30">
@@ -356,7 +356,7 @@ const MemberDashboard: React.FC = () => {
                                 </form>
                             </Card>
                             {myFeedbacks.map((f, idx) => (
-                                <Reveal key={f.id} delay={idx * 50}>
+                                <Reveal key={f.id} delay={idx * 50} instant={idx < 5}>
                                     <div className="p-6 bg-gray-800 border border-gray-700 rounded-2xl transition-all hover:border-teal-500/20">
                                         <h4 className="text-white font-bold">{f.subject}</h4>
                                         <p className="text-sm text-gray-400 italic mt-2">"{f.message}"</p>

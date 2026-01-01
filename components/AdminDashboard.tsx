@@ -190,7 +190,7 @@ const AdminDashboard: React.FC = () => {
             <div className="flex-1 space-y-6">
                 {activeTab === 'overview' && (
                     <div className="space-y-6 animate-fadeIn">
-                        <Reveal>
+                        <Reveal instant={true}>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <Card title="Impact Score" className="border-l-4 border-teal-500 hover:shadow-teal-500/10">
                                     {loading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-black text-white">{memberStats.reduce((s,m) => s+m.totalPoints, 0)}</p>}
@@ -206,7 +206,7 @@ const AdminDashboard: React.FC = () => {
                                 </Card>
                             </div>
                         </Reveal>
-                        <Reveal delay={200}>
+                        <Reveal instant={true} delay={200}>
                             <div style={{ height: 350 }} className="bg-gray-800/20 p-4 rounded-2xl border border-gray-800">
                                 {loading ? (
                                     <Skeleton className="w-full h-full" />
@@ -226,7 +226,7 @@ const AdminDashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'profile' && currentUser && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
                             <Card title="Identity Management">
                                 <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800">
@@ -330,7 +330,7 @@ const AdminDashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'settings' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="space-y-6 animate-fadeIn">
                             <Card title="Branding & Visuals">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -420,7 +420,7 @@ const AdminDashboard: React.FC = () => {
 
                 {activeTab === 'events' && (
                     <div className="space-y-6 animate-fadeIn">
-                        <Reveal>
+                        <Reveal instant={true}>
                             <Card title={editingEventId ? "Edit Existing Event" : "Publish New Event"}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-4">
@@ -463,7 +463,7 @@ const AdminDashboard: React.FC = () => {
 
                         <div className="space-y-4">
                             {publicEvents.map((evt, idx) => (
-                                <Reveal key={evt.id} delay={idx * 50}>
+                                <Reveal key={evt.id} delay={idx * 50} instant={idx < 5}>
                                     <div className="group p-4 bg-gray-800 rounded-2xl border border-gray-700 flex justify-between items-center transition-all hover:border-teal-500/30 hover:shadow-teal-500/5">
                                         <div className="flex items-center space-x-4">
                                             <div className="w-12 h-12 bg-gray-900 rounded-lg overflow-hidden shadow-inner group-hover:scale-110 transition-transform">
@@ -486,7 +486,7 @@ const AdminDashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'registrations' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <Card title="Visitor Registrations (Active Window)">
                             <div className="space-y-4">
                                 {loading ? (
@@ -495,7 +495,7 @@ const AdminDashboard: React.FC = () => {
                                         <Skeleton className="h-20 w-full" />
                                     </>
                                 ) : activeRegistrations.length > 0 ? activeRegistrations.map((reg, idx) => (
-                                    <Reveal key={reg.id} delay={idx * 50}>
+                                    <Reveal key={reg.id} delay={idx * 50} instant={idx < 5}>
                                         <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-700 flex justify-between items-center hover:border-teal-500/30 transition-all">
                                             <div>
                                                 <h4 className="text-white font-black uppercase text-sm">{reg.name}</h4>
@@ -517,10 +517,10 @@ const AdminDashboard: React.FC = () => {
                     </Reveal>
                 )}
 
-                {activeTab === 'approvals' && <Reveal><PendingApprovals /></Reveal>}
-                {activeTab === 'members' && <Reveal><MemberManagement /></Reveal>}
+                {activeTab === 'approvals' && <Reveal instant={true}><PendingApprovals /></Reveal>}
+                {activeTab === 'members' && <Reveal instant={true}><MemberManagement /></Reveal>}
                 {activeTab === 'communications' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
                             <Card title="Global Broadcast">
                                 <textarea value={msg} onChange={e => setMsg(e.target.value)} className="w-full h-32 p-4 bg-gray-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600 transition-all" placeholder="Post club-wide announcement..." />
@@ -538,11 +538,11 @@ const AdminDashboard: React.FC = () => {
                     </Reveal>
                 )}
                 {activeTab === 'feedback' && (
-                    <Reveal>
+                    <Reveal instant={true}>
                         <Card title="Feedbacks & Queries">
                             <div className="space-y-4">
                                 {feedbacks.map((f, idx) => (
-                                    <Reveal key={f.id} delay={idx * 50}>
+                                    <Reveal key={f.id} delay={idx * 50} instant={idx < 5}>
                                         <div className="p-6 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-all">
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="text-white font-bold">{f.subject}</h4>

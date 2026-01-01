@@ -10,7 +10,7 @@ const LeaderboardPage: React.FC = () => {
         <div className="animate-fadeIn min-h-[calc(100vh-5rem)] bg-gray-900 pb-24">
             <div className="relative py-24 bg-gray-800/40 border-b border-gray-800 overflow-hidden">
                 <div className="container mx-auto px-6 text-center">
-                    <Reveal>
+                    <Reveal instant={true}>
                         <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">Global Rankings</h2>
                         <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tighter uppercase leading-none">
                             Club <span className="text-transparent bg-clip-text bg-gradient-to-tr from-amber-400 to-amber-200">Leaderboard</span>
@@ -23,7 +23,7 @@ const LeaderboardPage: React.FC = () => {
             </div>
 
             <div className="container mx-auto px-6 mt-16 max-w-5xl">
-                <Reveal delay={200}>
+                <Reveal delay={200} instant={true}>
                     <div className="bg-gray-800 rounded-[2rem] border border-gray-700 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-amber-500/5">
                         <div className="p-8 border-b border-gray-700 bg-gray-800/50 flex justify-between items-center">
                             <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center">

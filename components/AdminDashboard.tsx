@@ -34,8 +34,13 @@ const AdminDashboard: React.FC = () => {
     }, [aboutContent]);
 
     // Profile States
-    const [newPass, setNewPass] = useState('');
     const [newPhoto, setNewPhoto] = useState(currentUser?.photoUrl || '');
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    const [currentPass, setCurrentPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [passError, setPassError] = useState('');
+    const [isVerified, setIsVerified] = useState(false);
 
     // Event Form State
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -103,14 +108,44 @@ const AdminDashboard: React.FC = () => {
         alert('Application settings updated!');
     };
 
+    const handleVerifyCurrentPassword = () => {
+        if (currentPass === currentUser?.password) {
+            setIsVerified(true);
+            setPassError('');
+        } else {
+            setPassError('Current password incorrect.');
+        }
+    };
+
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentUser) return;
+        
         const updates: any = { photoUrl: newPhoto };
-        if (newPass) updates.password = newPass;
+        
+        if (isUpdatingPassword) {
+            if (!isVerified) {
+                setPassError('Please verify your current password first.');
+                return;
+            }
+            if (!newPass || newPass !== confirmPass) {
+                setPassError('New passwords do not match or are empty.');
+                return;
+            }
+            updates.password = newPass;
+        }
+
         await updateMember(currentUser.id, updates);
+        
+        // Reset pass flow
+        setIsUpdatingPassword(false);
+        setIsVerified(false);
+        setCurrentPass('');
         setNewPass('');
-        alert('Profile details updated!');
+        setConfirmPass('');
+        setPassError('');
+        
+        alert('Profile details updated successfully!');
     };
 
     const chartData = Object.values(ActivityType).map(type => ({
@@ -119,7 +154,7 @@ const AdminDashboard: React.FC = () => {
     }));
 
     const navItems = [
-        { id: 'overview', label: 'Overview', icon: <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
+        { id: 'overview', label: 'Overview', icon: <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
         { id: 'approvals', label: 'Review Logs', icon: <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
         { id: 'events', label: 'Manage Events', icon: <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /> },
         { id: 'registrations', label: 'Attendees', icon: <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
@@ -218,16 +253,70 @@ const AdminDashboard: React.FC = () => {
                                         </ol>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Update Access Pin (Password)</label>
-                                    <input 
-                                        type="password" 
-                                        value={newPass}
-                                        onChange={e => setNewPass(e.target.value)}
-                                        placeholder="Leave empty to keep current" 
-                                        className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                    />
+
+                                <div className="border-t border-gray-700 pt-6">
+                                    {!isUpdatingPassword ? (
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setIsUpdatingPassword(true)}
+                                            className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors"
+                                        >
+                                            + Update Access Pin
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-4 animate-fadeIn">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
+                                                <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
+                                            </div>
+                                            
+                                            {!isVerified ? (
+                                                <div className="space-y-2">
+                                                    <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
+                                                    <div className="flex gap-2">
+                                                        <input 
+                                                            type="password" 
+                                                            value={currentPass}
+                                                            onChange={e => setCurrentPass(e.target.value)}
+                                                            placeholder="Current PIN" 
+                                                            className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                        />
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={handleVerifyCurrentPassword}
+                                                            className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl"
+                                                        >
+                                                            Verify
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
+                                                        <input 
+                                                            type="password" 
+                                                            value={newPass}
+                                                            onChange={e => setNewPass(e.target.value)}
+                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
+                                                        <input 
+                                                            type="password" 
+                                                            value={confirmPass}
+                                                            onChange={e => setConfirmPass(e.target.value)}
+                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {passError && <p className="text-[10px] text-rose-400 font-bold uppercase ml-1">{passError}</p>}
+                                        </div>
+                                    )}
                                 </div>
+
                                 <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Access</button>
                             </form>
                         </Card>

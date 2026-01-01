@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ActivityForm from './ActivityForm';
 import Leaderboard from './Leaderboard';
@@ -15,8 +14,13 @@ const MemberDashboard: React.FC = () => {
     const [fbMessage, setFbMessage] = useState('');
 
     // Profile state
-    const [newPass, setNewPass] = useState('');
     const [newPhoto, setNewPhoto] = useState(currentUser?.photoUrl || '');
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    const [currentPass, setCurrentPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [passError, setPassError] = useState('');
+    const [isVerified, setIsVerified] = useState(false);
 
     if (!currentUser) return null;
 
@@ -34,13 +38,43 @@ const MemberDashboard: React.FC = () => {
         alert('Feedback submitted successfully!');
     };
 
+    const handleVerifyCurrentPassword = () => {
+        if (currentPass === currentUser.password) {
+            setIsVerified(true);
+            setPassError('');
+        } else {
+            setPassError('Current password incorrect.');
+        }
+    };
+
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
+        
         const updates: any = { photoUrl: newPhoto };
-        if (newPass) updates.password = newPass;
+        
+        if (isUpdatingPassword) {
+            if (!isVerified) {
+                setPassError('Please verify your current password first.');
+                return;
+            }
+            if (!newPass || newPass !== confirmPass) {
+                setPassError('New passwords do not match or are empty.');
+                return;
+            }
+            updates.password = newPass;
+        }
+
         await updateMember(currentUser.id, updates);
+        
+        // Reset pass flow
+        setIsUpdatingPassword(false);
+        setIsVerified(false);
+        setCurrentPass('');
         setNewPass('');
-        alert('Profile details updated!');
+        setConfirmPass('');
+        setPassError('');
+        
+        alert('Profile details updated successfully!');
     };
 
     const navItems = [
@@ -177,17 +211,71 @@ const MemberDashboard: React.FC = () => {
                                         </ol>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Update Access Pin (Password)</label>
-                                    <input 
-                                        type="password" 
-                                        value={newPass}
-                                        onChange={e => setNewPass(e.target.value)}
-                                        placeholder="Leave empty to keep current" 
-                                        className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                    />
+
+                                <div className="border-t border-gray-700 pt-6">
+                                    {!isUpdatingPassword ? (
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setIsUpdatingPassword(true)}
+                                            className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors"
+                                        >
+                                            + Update Access Pin
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-4 animate-fadeIn">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
+                                                <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
+                                            </div>
+                                            
+                                            {!isVerified ? (
+                                                <div className="space-y-2">
+                                                    <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
+                                                    <div className="flex gap-2">
+                                                        <input 
+                                                            type="password" 
+                                                            value={currentPass}
+                                                            onChange={e => setCurrentPass(e.target.value)}
+                                                            placeholder="Current PIN" 
+                                                            className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                        />
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={handleVerifyCurrentPassword}
+                                                            className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl"
+                                                        >
+                                                            Verify
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
+                                                        <input 
+                                                            type="password" 
+                                                            value={newPass}
+                                                            onChange={e => setNewPass(e.target.value)}
+                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
+                                                        <input 
+                                                            type="password" 
+                                                            value={confirmPass}
+                                                            onChange={e => setConfirmPass(e.target.value)}
+                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {passError && <p className="text-[10px] text-rose-400 font-bold uppercase ml-1">{passError}</p>}
+                                        </div>
+                                    )}
                                 </div>
-                                <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Access</button>
+
+                                <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Record</button>
                             </form>
                         </Card>
                     </div>
@@ -232,9 +320,14 @@ const MemberDashboard: React.FC = () => {
                 {activeTab === 'support' && (
                     <div className="animate-fadeIn space-y-6">
                         <Card title="Speak with Leadership">
+                            <div className="mb-6 p-4 bg-teal-500/5 rounded-2xl border border-teal-500/10">
+                                <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                                    Use this portal to report technical issues, share suggestions for club improvements, or submit formal complaints to the President. We aim for transparency and excellence in all club operations.
+                                </p>
+                            </div>
                             <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                                <input type="text" value={fbSubject} onChange={e => setFbSubject(e.target.value)} placeholder="Topic" className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none" />
-                                <textarea rows={4} value={fbMessage} onChange={e => setFbMessage(e.target.value)} placeholder="Type your message to President..." className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none" />
+                                <input type="text" value={fbSubject} onChange={e => setFbSubject(e.target.value)} placeholder="Topic (e.g., Suggestion, Issue, Feedback)" className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none" />
+                                <textarea rows={4} value={fbMessage} onChange={e => setFbMessage(e.target.value)} placeholder="Provide specific details about your concern..." className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none" />
                                 <button type="submit" className="w-full py-4 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-900/20">Submit Ticket</button>
                             </form>
                         </Card>

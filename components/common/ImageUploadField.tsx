@@ -92,7 +92,7 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                                 )}
                             </div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                {uploading ? 'Processing...' : 'Click to Upload Asset'}
+                                {uploading ? 'Processing...' : 'Click to upload image file'}
                             </p>
                             <p className="text-[8px] text-gray-600 font-bold uppercase mt-1">MAX 1MB • {folder === 'events' ? 'JPG' : 'JPG/PNG'}</p>
                         </div>

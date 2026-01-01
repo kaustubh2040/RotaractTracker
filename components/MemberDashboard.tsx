@@ -191,7 +191,7 @@ const MemberDashboard: React.FC = () => {
 
                             <form onSubmit={handleProfileUpdate} className="space-y-6">
                                 <ImageUploadField 
-                                    label="Photo URL (GitHub Raw or Direct Upload)"
+                                    label="Profile Photo"
                                     value={newPhoto}
                                     onChange={setNewPhoto}
                                     folder="profiles"

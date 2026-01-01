@@ -240,6 +240,12 @@ const HomePage: React.FC = () => {
                         Driving <span className="text-white font-bold italic">Action</span>. Creating <span className="text-white font-bold italic">Impact</span>. 
                         Building the future with <span className="text-teal-400 font-bold">Rotaract</span>.
                     </p>
+                    
+                    {/* BRAND IDENTITY PARAGRAPH FOR SEO */}
+                    <p className="mt-8 text-sm text-gray-500 font-medium max-w-2xl mx-auto leading-relaxed">
+                        Actra is the official digital platform of the Rotaract Club of RSCOE, the youth leadership and service club of JSPM’s Rajarshi Shahu College of Engineering, Tathawade, Pune.
+                    </p>
+
                     <div className="mt-12 flex justify-center items-center">
                         <button onClick={() => setCurrentPage('login')} className="w-full sm:w-auto px-12 py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-full transition-all shadow-2xl active:scale-95 text-sm">Join Community</button>
                     </div>
@@ -367,7 +373,7 @@ const HomePage: React.FC = () => {
 
             <footer className="py-20 bg-gray-900 border-t border-gray-800 text-center">
                 <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-2">{settings.appName}</h2>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-6">{settings.appSubtitle}</p>
+                <p className="text-[10px] font-black uppercase tracking-export const sSubtitle = 'appSubtitle';[settings.appSubtitle]">{settings.appSubtitle}</p>
                 <div className="mt-12 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">&copy; 2025 • Built by <span className="text-teal-400">Kaustubh Patil</span> • All rights reserved</div>
             </footer>
         </div>

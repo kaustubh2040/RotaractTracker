@@ -4,6 +4,7 @@ import Leaderboard from './Leaderboard';
 import { useClubData } from '../hooks/useClubData';
 import Card from './common/Card';
 import { ActivityStatus } from '../types';
+import ImageUploadField from './common/ImageUploadField';
 
 const MemberDashboard: React.FC = () => {
     const { currentUser, activities, memberStats, announcements, notifications, addFeedback, feedbacks, updateMember } = useClubData();
@@ -189,27 +190,20 @@ const MemberDashboard: React.FC = () => {
                             </div>
 
                             <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Photo URL (GitHub Raw)</label>
-                                    <input 
-                                        type="text" 
-                                        value={newPhoto}
-                                        onChange={e => setNewPhoto(e.target.value)}
-                                        placeholder="https://raw.githubusercontent.com/..." 
-                                        className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                    />
-                                    <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10">
-                                        <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
-                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            Guide: Creating a Git Raw Link
-                                        </h5>
-                                        <ol className="text-[11px] text-gray-500 space-y-2 ml-1">
-                                            <li>1. Upload your photo to a public GitHub Repository.</li>
-                                            <li>2. Open the file in the browser and click the <span className="text-white font-bold">"Raw"</span> button.</li>
-                                            <li>3. Copy the URL from the address bar (it should start with <code className="text-teal-500">raw.githubusercontent.com</code>).</li>
-                                            <li>4. Paste it here to update your dashboard avatar.</li>
-                                        </ol>
-                                    </div>
+                                <ImageUploadField 
+                                    label="Photo URL (GitHub Raw or Direct Upload)"
+                                    value={newPhoto}
+                                    onChange={setNewPhoto}
+                                    folder="profiles"
+                                    placeholder="https://raw.githubusercontent.com/..."
+                                />
+                                
+                                <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10">
+                                    <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        Tip
+                                    </h5>
+                                    <p className="text-[11px] text-gray-500 leading-relaxed">Direct upload stores your image securely in our cloud. Your profile will be updated across the entire platform instantly.</p>
                                 </div>
 
                                 <div className="border-t border-gray-700 pt-6">

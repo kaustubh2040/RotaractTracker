@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useMemo, useEffect, useCall
 import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES, BOD_POSITIONS } from '../constants';
-import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { supabase, isSupabaseConfigured, uploadFile } from '../services/supabase';
 
 interface ClubDataContextType {
     currentUser: User | null;
@@ -35,6 +35,7 @@ interface ClubDataContextType {
     addFeedback: (subject: string, message: string) => Promise<void>;
     replyToFeedback: (feedbackId: string, reply: string) => Promise<void>;
     registerVisitor: (reg: Omit<EventRegistration, 'id' | 'createdAt'>) => Promise<void>;
+    uploadImage: (file: File, folder: 'events' | 'profiles' | 'logos') => Promise<string | null>;
     memberStats: MemberStats[];
     loading: boolean;
     dbStatus: 'connected' | 'local' | 'error';
@@ -251,9 +252,17 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setRegistrations(prev => [...prev, newReg]);
     };
 
+    const uploadImage = async (file: File, folder: 'events' | 'profiles' | 'logos'): Promise<string | null> => {
+        try {
+            return await uploadFile(file, folder);
+        } catch (e) {
+            console.error('Image upload failed:', e);
+            throw e;
+        }
+    };
+
     const updatePublicEvent = async (id: string, updates: Partial<PublicEvent>) => {
         if (dbStatus === 'connected' && supabase) {
-            // Fix: Corrected property access to hostClub as host_club does not exist on type 'Partial<PublicEvent>'.
             const dbUpdates: any = {
                 title: updates.title,
                 description: updates.description,
@@ -405,7 +414,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             announcements, notifications, feedbacks, settings, aboutContent, publicEvents, registrations, currentPage, setCurrentPage,
             updateSettings, updateAboutContent, addPublicEvent, updatePublicEvent, deletePublicEvent,
             addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
-            addAnnouncement, sendNotification, addFeedback, replyToFeedback, registerVisitor, memberStats, loading, dbStatus
+            addAnnouncement, sendNotification, addFeedback, replyToFeedback, registerVisitor, uploadImage, memberStats, loading, dbStatus
         }}>
             {children}
         </ClubDataContext.Provider>

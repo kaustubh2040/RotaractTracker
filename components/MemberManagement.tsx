@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useClubData } from '../hooks/useClubData';
 import type { User } from '../types';
 import Card from './common/Card';
 import { BOD_POSITIONS } from '../constants';
+import ImageUploadField from './common/ImageUploadField';
 
 const AddMemberForm: React.FC = () => {
     const { addMember } = useClubData();
@@ -52,7 +52,7 @@ const AddMemberForm: React.FC = () => {
 const MemberManagement: React.FC = () => {
     const { users, updateMember, deleteMember, currentUser } = useClubData();
     const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
-    const [formState, setFormState] = useState<{name: string, password?: string, positions: string[]}>({ name: '', positions: [] });
+    const [formState, setFormState] = useState<{name: string, password?: string, positions: string[], photoUrl?: string}>({ name: '', positions: [] });
     
     const sortedUsers = [...users].sort((a,b) => {
         if(a.role === 'admin') return -1;
@@ -76,7 +76,11 @@ const MemberManagement: React.FC = () => {
 
     const handleEdit = (member: User) => {
         setEditingMemberId(member.id);
-        setFormState({ name: member.name, positions: member.positions || [] });
+        setFormState({ 
+            name: member.name, 
+            positions: member.positions || [],
+            photoUrl: member.photoUrl || ''
+        });
     };
 
     const handleCancel = () => {
@@ -118,6 +122,14 @@ const MemberManagement: React.FC = () => {
                                         className="p-3 bg-gray-700 border-gray-600 text-white rounded-xl outline-none"
                                     />
                                 </div>
+                                
+                                <ImageUploadField 
+                                    label="Member Photo"
+                                    value={formState.photoUrl || ''}
+                                    onChange={url => setFormState({...formState, photoUrl: url})}
+                                    folder="profiles"
+                                />
+
                                 <div>
                                     <p className="text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Assign BOD Positions (Max 2)</p>
                                     <div className="flex flex-wrap gap-2 h-40 overflow-y-auto p-4 bg-gray-900 rounded-xl border border-gray-700 scrollbar-hide">

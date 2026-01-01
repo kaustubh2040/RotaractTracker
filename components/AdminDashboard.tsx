@@ -6,6 +6,7 @@ import Card from './common/Card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ActivityType, PublicEvent } from '../types';
 import MemberManagement from './MemberManagement';
+import ImageUploadField from './common/ImageUploadField';
 
 const AdminDashboard: React.FC = () => {
     const { 
@@ -231,27 +232,20 @@ const AdminDashboard: React.FC = () => {
                             </div>
 
                             <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Photo URL (GitHub Raw)</label>
-                                    <input 
-                                        type="text" 
-                                        value={newPhoto}
-                                        onChange={e => setNewPhoto(e.target.value)}
-                                        placeholder="https://raw.githubusercontent.com/..." 
-                                        className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                    />
-                                    <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10 text-left">
-                                        <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
-                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            Guide: Creating a Git Raw Link
-                                        </h5>
-                                        <ol className="text-[11px] text-gray-500 space-y-2 ml-1">
-                                            <li>1. Upload your photo to a public GitHub Repository.</li>
-                                            <li>2. Open the file in the browser and click the <span className="text-white font-bold">"Raw"</span> button.</li>
-                                            <li>3. Copy the URL from the address bar (it should start with <code className="text-teal-500">raw.githubusercontent.com</code>).</li>
-                                            <li>4. Paste it here to update your dashboard avatar.</li>
-                                        </ol>
-                                    </div>
+                                <ImageUploadField 
+                                    label="Photo URL (GitHub Raw or Direct Upload)"
+                                    value={newPhoto}
+                                    onChange={setNewPhoto}
+                                    folder="profiles"
+                                    placeholder="https://raw.githubusercontent.com/..."
+                                />
+                                
+                                <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10 text-left">
+                                    <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        Tip
+                                    </h5>
+                                    <p className="text-[11px] text-gray-500 leading-relaxed">Direct upload stores your image securely in our cloud. Your profile will be updated across the entire platform instantly.</p>
                                 </div>
 
                                 <div className="border-t border-gray-700 pt-6">
@@ -326,7 +320,7 @@ const AdminDashboard: React.FC = () => {
                 {activeTab === 'settings' && (
                     <div className="space-y-6 animate-fadeIn">
                         <Card title="Branding & Visuals">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Application Name</label>
                                     <input 
@@ -344,20 +338,19 @@ const AdminDashboard: React.FC = () => {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Club Logo URL</label>
-                                    <input 
-                                        value={tempSettings.clubLogoUrl} 
-                                        onChange={e => setTempSettings({...tempSettings, clubLogoUrl: e.target.value})} 
-                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                    <ImageUploadField 
+                                        label="Club Logo"
+                                        value={tempSettings.clubLogoUrl}
+                                        onChange={url => setTempSettings({...tempSettings, clubLogoUrl: url})}
+                                        folder="logos"
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">About Section – Group Image URL</label>
-                                    <input 
-                                        value={tempSettings.aboutGroupImageUrl || ''} 
-                                        onChange={e => setTempSettings({...tempSettings, aboutGroupImageUrl: e.target.value})} 
-                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
-                                        placeholder="Optional: Provide a Raw Image URL for the About section"
+                                    <ImageUploadField 
+                                        label="About Section – Group Image"
+                                        value={tempSettings.aboutGroupImageUrl || ''}
+                                        onChange={url => setTempSettings({...tempSettings, aboutGroupImageUrl: url})}
+                                        folder="events"
                                     />
                                 </div>
                             </div>
@@ -414,25 +407,39 @@ const AdminDashboard: React.FC = () => {
                 {activeTab === 'events' && (
                     <div className="space-y-6 animate-fadeIn">
                         <Card title={editingEventId ? "Edit Existing Event" : "Publish New Event"}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input value={evtTitle} onChange={e => setEvtTitle(e.target.value)} placeholder="Event Title" className="p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                <input value={evtDate} onChange={e => setEvtDate(e.target.value)} type="date" className="p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                <input value={evtVenue} onChange={e => setEvtVenue(e.target.value)} placeholder="Venue" className="p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                <input value={evtImg} onChange={e => setEvtImg(e.target.value)} placeholder="Image Link" className="p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                <input value={evtCategory} onChange={e => setEvtCategory(e.target.value)} placeholder="Category" className="p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                <input value={evtHostClub} onChange={e => setEvtHostClub(e.target.value)} placeholder="Host Club" className="p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <input value={evtTitle} onChange={e => setEvtTitle(e.target.value)} placeholder="Event Title" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                    <input value={evtDate} onChange={e => setEvtDate(e.target.value)} type="date" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                    <input value={evtVenue} onChange={e => setEvtVenue(e.target.value)} placeholder="Venue" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                </div>
+                                <div className="space-y-4">
+                                    <input value={evtCategory} onChange={e => setEvtCategory(e.target.value)} placeholder="Category" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                    <input value={evtHostClub} onChange={e => setEvtHostClub(e.target.value)} placeholder="Host Club" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                            <span className="text-[10px] font-black uppercase text-gray-500">Reg Portal</span>
+                                            <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                                        </div>
+                                        <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                            <span className="text-[10px] font-black uppercase text-gray-500">Upcoming</span>
+                                            <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <ImageUploadField 
+                                        label="Event Image"
+                                        value={evtImg}
+                                        onChange={setEvtImg}
+                                        folder="events"
+                                    />
+                                </div>
                                 
-                                <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                    <span className="text-sm text-gray-300">Registration Portal</span>
-                                    <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" />
-                                </div>
-                                <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                    <span className="text-sm text-gray-300">Show in Upcoming</span>
-                                    <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" />
-                                </div>
                                 <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Event Story/Mission..." className="md:col-span-2 p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-32" />
                             </div>
-                            <div className="mt-4 flex space-x-2">
+                            <div className="mt-6 flex space-x-3">
                                 <button onClick={handleSaveEvent} className="flex-1 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold shadow-lg transition-all">{editingEventId ? 'Update Event' : 'Publish to Feed'}</button>
                                 {editingEventId && <button onClick={() => { setEditingEventId(null); setEvtTitle(''); }} className="px-6 py-3 bg-gray-700 rounded-xl font-bold">Cancel</button>}
                             </div>

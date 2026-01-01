@@ -5,9 +5,11 @@ import { useClubData } from '../hooks/useClubData';
 import Card from './common/Card';
 import { ActivityStatus } from '../types';
 import ImageUploadField from './common/ImageUploadField';
+import Reveal from './common/Reveal';
+import { Skeleton } from './common/Skeleton';
 
 const MemberDashboard: React.FC = () => {
-    const { currentUser, activities, memberStats, announcements, notifications, addFeedback, feedbacks, updateMember } = useClubData();
+    const { currentUser, activities, memberStats, announcements, notifications, addFeedback, feedbacks, updateMember, loading } = useClubData();
     const [activeTab, setActiveTab] = useState<'home' | 'report' | 'history' | 'profile' | 'support'>('home');
     
     // Feedback form state
@@ -88,13 +90,13 @@ const MemberDashboard: React.FC = () => {
 
     return (
         <div className="flex flex-col md:flex-row min-h-[calc(100vh-8rem)]">
-            <aside className="w-full md:w-64 bg-gray-800/50 rounded-2xl p-4 mb-6 md:mb-0 md:mr-6 border border-gray-700 h-fit">
+            <aside className="w-full md:w-64 bg-gray-800/50 rounded-2xl p-4 mb-6 md:mb-0 md:mr-6 border border-gray-700 h-fit transition-all duration-300">
                 <nav className="space-y-1">
                     {navItems.map(item => (
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id as any)}
-                            className={`w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${
+                            className={`w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all active:scale-[0.97] ${
                                 activeTab === item.id ? 'bg-teal-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                             }`}
                         >
@@ -109,230 +111,261 @@ const MemberDashboard: React.FC = () => {
                 {activeTab === 'home' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
                         <div className="space-y-6">
-                            <div className="bg-gray-800 p-8 rounded-[2.5rem] border border-gray-700 shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
-                                <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-teal-500/10 to-transparent"></div>
-                                <div className="w-20 h-20 rounded-2xl bg-gray-900 border-2 border-teal-500/30 overflow-hidden shadow-xl mb-4 relative z-10">
-                                    {currentUser.photoUrl ? <img src={currentUser.photoUrl} className="w-full h-full object-cover" /> : null}
-                                </div>
-                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">{currentUser.name}</h3>
-                                <div className="flex flex-wrap justify-center gap-2 mb-6">
-                                    {currentUser.positions?.map(pos => (
-                                        <span key={pos} className="bg-teal-500/20 text-teal-300 border border-teal-500/30 px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(20,184,166,0.2)]">
-                                            {pos}
-                                        </span>
-                                    ))}
-                                    {(!currentUser.positions || currentUser.positions.length === 0) && (
-                                        <span className="text-gray-600 text-[10px] font-black uppercase tracking-widest italic">Club Member</span>
-                                    )}
-                                </div>
-                                <div className="w-full grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700">
-                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Impact Rank</p>
-                                        <p className="text-3xl font-black text-teal-400">#{myRank}</p>
+                            <Reveal>
+                                <div className="bg-gray-800 p-8 rounded-[2.5rem] border border-gray-700 shadow-2xl relative overflow-hidden flex flex-col items-center text-center group transition-all duration-500 hover:border-teal-500/30">
+                                    <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-teal-500/10 to-transparent"></div>
+                                    <div className="w-20 h-20 rounded-2xl bg-gray-900 border-2 border-teal-500/30 overflow-hidden shadow-xl mb-4 relative z-10 group-hover:scale-110 transition-transform duration-500">
+                                        {currentUser.photoUrl ? <img src={currentUser.photoUrl} className="w-full h-full object-cover" /> : null}
                                     </div>
-                                    <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700">
-                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Pts</p>
-                                        <p className="text-3xl font-black text-white">{myStats?.totalPoints ?? 0}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Card title="Club Broadcasts">
-                                {announcements.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {announcements.slice(0, 3).map(ann => (
-                                            <div key={ann.id} className="p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl">
-                                                <p className="text-sm text-gray-200 leading-relaxed italic pr-8">"{ann.text}"</p>
-                                                <div className="mt-4 flex justify-between items-center text-[9px] font-black uppercase text-gray-600 tracking-widest">
-                                                    <span>Official Notice</span>
-                                                    <span>{new Date(ann.createdAt).toLocaleDateString()}</span>
-                                                </div>
-                                            </div>
+                                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2 group-hover:text-teal-400 transition-colors">{currentUser.name}</h3>
+                                    <div className="flex flex-wrap justify-center gap-2 mb-6">
+                                        {currentUser.positions?.map(pos => (
+                                            <span key={pos} className="bg-teal-500/20 text-teal-300 border border-teal-500/30 px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(20,184,166,0.2)]">
+                                                {pos}
+                                            </span>
                                         ))}
+                                        {(!currentUser.positions || currentUser.positions.length === 0) && (
+                                            <span className="text-gray-600 text-[10px] font-black uppercase tracking-widest italic">Club Member</span>
+                                        )}
                                     </div>
-                                ) : <p className="text-center py-4 text-gray-500 italic">No broadcasts today.</p>}
-                            </Card>
+                                    <div className="w-full grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700 group-hover:border-teal-500/10 transition-colors">
+                                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Impact Rank</p>
+                                            {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : <p className="text-3xl font-black text-teal-400">#{myRank}</p>}
+                                        </div>
+                                        <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700 group-hover:border-teal-500/10 transition-colors">
+                                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Pts</p>
+                                            {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : <p className="text-3xl font-black text-white">{myStats?.totalPoints ?? 0}</p>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Reveal>
+
+                            <Reveal delay={200}>
+                                <Card title="Club Broadcasts">
+                                    {loading ? (
+                                        <div className="space-y-4">
+                                            <Skeleton className="h-16 w-full" />
+                                            <Skeleton className="h-16 w-full" />
+                                        </div>
+                                    ) : announcements.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {announcements.slice(0, 3).map((ann, idx) => (
+                                                <Reveal key={ann.id} delay={idx * 50}>
+                                                    <div className="p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl transition-all hover:bg-teal-500/10 hover:border-teal-500/30">
+                                                        <p className="text-sm text-gray-200 leading-relaxed italic pr-8">"{ann.text}"</p>
+                                                        <div className="mt-4 flex justify-between items-center text-[9px] font-black uppercase text-gray-600 tracking-widest">
+                                                            <span>Official Notice</span>
+                                                            <span>{new Date(ann.createdAt).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+                                                </Reveal>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-center py-4 text-gray-500 italic">No broadcasts today.</p>}
+                                </Card>
+                            </Reveal>
                         </div>
 
                         <div className="space-y-6">
-                            <Card title="Latest Alerts">
-                                <div className="space-y-3">
-                                    {myNotifications.length > 0 ? myNotifications.slice(0, 5).map(not => (
-                                        <div key={not.id} className="p-4 bg-gray-900/50 rounded-2xl flex items-start space-x-4 border border-gray-800">
-                                            <div className="mt-2 w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.6)] shrink-0"></div>
-                                            <div className="flex-1">
-                                                <p className="text-sm text-gray-300 leading-relaxed">{not.text}</p>
-                                                <span className="text-[9px] text-gray-600 font-bold mt-2 inline-block uppercase tracking-widest">{new Date(not.createdAt).toLocaleTimeString()}</span>
-                                            </div>
-                                        </div>
-                                    )) : <p className="text-center py-10 text-gray-600 italic">No recent system alerts.</p>}
-                                </div>
-                            </Card>
-                            <Leaderboard />
+                            <Reveal delay={100}>
+                                <Card title="Latest Alerts">
+                                    <div className="space-y-3">
+                                        {loading ? (
+                                            <Skeleton className="h-24 w-full" />
+                                        ) : myNotifications.length > 0 ? myNotifications.slice(0, 5).map((not, idx) => (
+                                            <Reveal key={not.id} delay={idx * 50}>
+                                                <div className="p-4 bg-gray-900/50 rounded-2xl flex items-start space-x-4 border border-gray-800 transition-all hover:border-teal-500/20">
+                                                    <div className="mt-2 w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.6)] shrink-0"></div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm text-gray-300 leading-relaxed">{not.text}</p>
+                                                        <span className="text-[9px] text-gray-600 font-bold mt-2 inline-block uppercase tracking-widest">{new Date(not.createdAt).toLocaleTimeString()}</span>
+                                                    </div>
+                                                </div>
+                                            </Reveal>
+                                        )) : <p className="text-center py-10 text-gray-600 italic">No recent system alerts.</p>}
+                                    </div>
+                                </Card>
+                            </Reveal>
+                            <Reveal delay={300}>
+                                <Leaderboard />
+                            </Reveal>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'profile' && (
-                    <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
-                        <Card title="Identity Management">
-                            <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800">
-                                <p className="text-[10px] font-black uppercase text-gray-500 mb-2 tracking-[0.2em] ml-1 text-center">Account Record</p>
-                                <div className="text-center space-y-2">
-                                    <h4 className="text-3xl font-black text-white uppercase tracking-tighter">{currentUser.name}</h4>
-                                    <div className="flex justify-center gap-2">
-                                        {currentUser.positions?.map(p => (
-                                            <span key={p} className="bg-gray-800 text-teal-400 border border-teal-500/10 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{p}</span>
-                                        ))}
-                                    </div>
-                                    <p className="text-[9px] text-gray-600 font-bold uppercase mt-6 italic tracking-widest leading-relaxed">Identity Lock: Name and Position are fixed by the Club Secretary. Contact President for official record changes.</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                <ImageUploadField 
-                                    label="Profile Photo"
-                                    value={newPhoto}
-                                    onChange={setNewPhoto}
-                                    folder="profiles"
-                                    placeholder="https://raw.githubusercontent.com/..."
-                                />
-                                
-                                <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10">
-                                    <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        Tip
-                                    </h5>
-                                    <p className="text-[11px] text-gray-500 leading-relaxed">Direct upload stores your image securely in our cloud. Your profile will be updated across the entire platform instantly.</p>
-                                </div>
-
-                                <div className="border-t border-gray-700 pt-6">
-                                    {!isUpdatingPassword ? (
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setIsUpdatingPassword(true)}
-                                            className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors"
-                                        >
-                                            + Update Access Pin
-                                        </button>
-                                    ) : (
-                                        <div className="space-y-4 animate-fadeIn">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
-                                                <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
-                                            </div>
-                                            
-                                            {!isVerified ? (
-                                                <div className="space-y-2">
-                                                    <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
-                                                    <div className="flex gap-2">
-                                                        <input 
-                                                            type="password" 
-                                                            value={currentPass}
-                                                            onChange={e => setCurrentPass(e.target.value)}
-                                                            placeholder="Current PIN" 
-                                                            className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                        />
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={handleVerifyCurrentPassword}
-                                                            className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl"
-                                                        >
-                                                            Verify
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
-                                                        <input 
-                                                            type="password" 
-                                                            value={newPass}
-                                                            onChange={e => setNewPass(e.target.value)}
-                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
-                                                        <input 
-                                                            type="password" 
-                                                            value={confirmPass}
-                                                            onChange={e => setConfirmPass(e.target.value)}
-                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {passError && <p className="text-[10px] text-rose-400 font-bold uppercase ml-1">{passError}</p>}
+                    <Reveal>
+                        <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
+                            <Card title="Identity Management">
+                                <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800 transition-all hover:border-teal-500/20">
+                                    <p className="text-[10px] font-black uppercase text-gray-500 mb-2 tracking-[0.2em] ml-1 text-center">Account Record</p>
+                                    <div className="text-center space-y-2">
+                                        <h4 className="text-3xl font-black text-white uppercase tracking-tighter">{currentUser.name}</h4>
+                                        <div className="flex justify-center gap-2">
+                                            {currentUser.positions?.map(p => (
+                                                <span key={p} className="bg-gray-800 text-teal-400 border border-teal-500/10 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{p}</span>
+                                            ))}
                                         </div>
-                                    )}
+                                        <p className="text-[9px] text-gray-600 font-bold uppercase mt-6 italic tracking-widest leading-relaxed">Identity Lock: Name and Position are fixed by the Club Secretary. Contact President for official record changes.</p>
+                                    </div>
                                 </div>
 
-                                <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Record</button>
-                            </form>
-                        </Card>
-                    </div>
+                                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                                    <ImageUploadField 
+                                        label="Profile Photo"
+                                        value={newPhoto}
+                                        onChange={setNewPhoto}
+                                        folder="profiles"
+                                        placeholder="https://raw.githubusercontent.com/..."
+                                    />
+                                    
+                                    <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10">
+                                        <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
+                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            Tip
+                                        </h5>
+                                        <p className="text-[11px] text-gray-500 leading-relaxed">Direct upload stores your image securely in our cloud. Your profile will be updated across the entire platform instantly.</p>
+                                    </div>
+
+                                    <div className="border-t border-gray-700 pt-6">
+                                        {!isUpdatingPassword ? (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setIsUpdatingPassword(true)}
+                                                className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors active:scale-95"
+                                            >
+                                                + Update Access Pin
+                                            </button>
+                                        ) : (
+                                            <div className="space-y-4 animate-fadeIn">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
+                                                    <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
+                                                </div>
+                                                
+                                                {!isVerified ? (
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
+                                                        <div className="flex gap-2">
+                                                            <input 
+                                                                type="password" 
+                                                                value={currentPass}
+                                                                onChange={e => setCurrentPass(e.target.value)}
+                                                                placeholder="Current PIN" 
+                                                                className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                            />
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={handleVerifyCurrentPassword}
+                                                                className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl active:scale-95 transition-all"
+                                                            >
+                                                                Verify
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
+                                                            <input 
+                                                                type="password" 
+                                                                value={newPass}
+                                                                onChange={e => setNewPass(e.target.value)}
+                                                                className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
+                                                            <input 
+                                                                type="password" 
+                                                                value={confirmPass}
+                                                                onChange={e => setConfirmPass(e.target.value)}
+                                                                className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {passError && <p className="text-[10px] text-rose-400 font-bold uppercase ml-1">{passError}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Record</button>
+                                </form>
+                            </Card>
+                        </div>
+                    </Reveal>
                 )}
 
-                {activeTab === 'report' && <div className="animate-fadeIn max-w-2xl mx-auto"><ActivityForm /></div>}
+                {activeTab === 'report' && <Reveal><div className="animate-fadeIn max-w-2xl mx-auto"><ActivityForm /></div></Reveal>}
                 {activeTab === 'history' && (
-                    <Card title="Personal Log History" className="animate-fadeIn">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="text-[10px] uppercase font-black text-gray-500 border-b border-gray-800">
-                                    <tr>
-                                        <th className="p-4">Submission Detail</th>
-                                        <th className="p-4">Event Date</th>
-                                        <th className="p-4 text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-800">
-                                    {myActivities.map(act => (
-                                        <tr key={act.id} className="group hover:bg-gray-700/20">
-                                            <td className="p-4">
-                                                <p className="text-sm font-bold text-white uppercase tracking-tight">{act.type}</p>
-                                                <p className="text-[10px] text-gray-500 italic truncate max-w-xs leading-none mt-1">{act.description}</p>
-                                            </td>
-                                            <td className="p-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest">{new Date(act.date).toLocaleDateString()}</td>
-                                            <td className="p-4 text-center">
-                                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${
-                                                    act.status === ActivityStatus.APPROVED ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                    act.status === ActivityStatus.PENDING ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                    'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                                                }`}>{act.status}</span>
-                                            </td>
+                    <Reveal>
+                        <Card title="Personal Log History" className="animate-fadeIn">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="text-[10px] uppercase font-black text-gray-500 border-b border-gray-800">
+                                        <tr>
+                                            <th className="p-4">Submission Detail</th>
+                                            <th className="p-4">Event Date</th>
+                                            <th className="p-4 text-center">Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {myActivities.length === 0 && <p className="text-center py-16 text-gray-600 italic">No submission history found.</p>}
-                        </div>
-                    </Card>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800">
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan={3} className="p-8"><Skeleton className="h-20 w-full" /></td>
+                                            </tr>
+                                        ) : myActivities.map((act, idx) => (
+                                            <tr key={act.id} className="group hover:bg-gray-700/20 transition-all">
+                                                <td className="p-4">
+                                                    <p className="text-sm font-bold text-white uppercase tracking-tight group-hover:text-teal-400 transition-colors">{act.type}</p>
+                                                    <p className="text-[10px] text-gray-500 italic truncate max-w-xs leading-none mt-1">{act.description}</p>
+                                                </td>
+                                                <td className="p-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest">{new Date(act.date).toLocaleDateString()}</td>
+                                                <td className="p-4 text-center">
+                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border transition-all ${
+                                                        act.status === ActivityStatus.APPROVED ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                        act.status === ActivityStatus.PENDING ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                        'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                                    }`}>{act.status}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {!loading && myActivities.length === 0 && <p className="text-center py-16 text-gray-600 italic">No submission history found.</p>}
+                            </div>
+                        </Card>
+                    </Reveal>
                 )}
 
                 {activeTab === 'support' && (
-                    <div className="animate-fadeIn space-y-6">
-                        <Card title="Speak with Leadership">
-                            <div className="mb-6 p-4 bg-teal-500/5 rounded-2xl border border-teal-500/10">
-                                <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
-                                    Use this portal to report technical issues, share suggestions for club improvements, or submit formal complaints to the President. We aim for transparency and excellence in all club operations.
-                                </p>
-                            </div>
-                            <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                                <input type="text" value={fbSubject} onChange={e => setFbSubject(e.target.value)} placeholder="Topic (e.g., Suggestion, Issue, Feedback)" className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none" />
-                                <textarea rows={4} value={fbMessage} onChange={e => setFbMessage(e.target.value)} placeholder="Provide specific details about your concern..." className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none" />
-                                <button type="submit" className="w-full py-4 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-900/20">Submit Ticket</button>
-                            </form>
-                        </Card>
-                        {myFeedbacks.map(f => (
-                            <div key={f.id} className="p-6 bg-gray-800 border border-gray-700 rounded-2xl">
-                                <h4 className="text-white font-bold">{f.subject}</h4>
-                                <p className="text-sm text-gray-400 italic mt-2">"{f.message}"</p>
-                                {f.reply ? <div className="mt-4 p-4 bg-teal-500/10 rounded-xl text-xs text-gray-300">Reply: {f.reply}</div> : <p className="text-[9px] text-gray-600 font-bold uppercase mt-4">Awaiting response...</p>}
-                            </div>
-                        ))}
-                    </div>
+                    <Reveal>
+                        <div className="animate-fadeIn space-y-6">
+                            <Card title="Speak with Leadership">
+                                <div className="mb-6 p-4 bg-teal-500/5 rounded-2xl border border-teal-500/10 transition-all hover:border-teal-500/30">
+                                    <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                                        Use this portal to report technical issues, share suggestions for club improvements, or submit formal complaints to the President. We aim for transparency and excellence in all club operations.
+                                    </p>
+                                </div>
+                                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                                    <input type="text" value={fbSubject} onChange={e => setFbSubject(e.target.value)} placeholder="Topic (e.g., Suggestion, Issue, Feedback)" className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none transition-all" />
+                                    <textarea rows={4} value={fbMessage} onChange={e => setFbMessage(e.target.value)} placeholder="Provide specific details about your concern..." className="w-full p-4 bg-gray-700 border border-gray-600 text-white rounded-xl focus:border-teal-500 outline-none transition-all" />
+                                    <button type="submit" className="w-full py-4 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-900/20 active:scale-[0.98] transition-all">Submit Ticket</button>
+                                </form>
+                            </Card>
+                            {myFeedbacks.map((f, idx) => (
+                                <Reveal key={f.id} delay={idx * 50}>
+                                    <div className="p-6 bg-gray-800 border border-gray-700 rounded-2xl transition-all hover:border-teal-500/20">
+                                        <h4 className="text-white font-bold">{f.subject}</h4>
+                                        <p className="text-sm text-gray-400 italic mt-2">"{f.message}"</p>
+                                        {f.reply ? <div className="mt-4 p-4 bg-teal-500/10 rounded-xl text-xs text-gray-300 border border-teal-500/20">Reply: {f.reply}</div> : <p className="text-[9px] text-gray-600 font-bold uppercase mt-4">Awaiting response...</p>}
+                                    </div>
+                                </Reveal>
+                            ))}
+                        </div>
+                    </Reveal>
                 )}
             </div>
         </div>

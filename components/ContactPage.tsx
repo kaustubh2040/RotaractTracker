@@ -1,5 +1,6 @@
 import React from 'react';
 import { useClubData } from '../hooks/useClubData';
+import Reveal from './common/Reveal';
 
 const ContactPage: React.FC = () => {
     const { settings } = useClubData();
@@ -55,55 +56,60 @@ const ContactPage: React.FC = () => {
                     <div className="absolute top-10 right-10 w-96 h-96 bg-teal-500 blur-[150px] rounded-full"></div>
                 </div>
                 <div className="container mx-auto px-6 relative z-10 text-center">
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">Get in Touch</h2>
-                    <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-tight">
-                        Connect with <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-tr from-teal-400 to-teal-200">Rotaract Club of RSCOE</span>
-                    </h1>
-                    <p className="text-gray-400 mt-6 max-w-2xl mx-auto text-lg italic">
-                        "Join our vibrant community and stay updated with our latest impacts."
-                    </p>
+                    <Reveal>
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mb-4">Get in Touch</h2>
+                        <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-tight">
+                            Connect with <br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-tr from-teal-400 to-teal-200">Rotaract Club of RSCOE</span>
+                        </h1>
+                        <p className="text-gray-400 mt-6 max-w-2xl mx-auto text-lg italic">
+                            "Join our vibrant community and stay updated with our latest impacts."
+                        </p>
+                    </Reveal>
                 </div>
             </div>
 
             {/* Social Links Section */}
             <div className="container mx-auto px-6 mt-20 max-w-5xl">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                    {socialLinks.map((link) => (
-                        <a
-                            key={link.name}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group flex items-center p-8 bg-gray-800 border border-gray-700 rounded-[2rem] shadow-xl hover:border-teal-500/50 hover:bg-gray-800/80 transition-all duration-300 transform hover:-translate-y-2 active:scale-95"
-                        >
-                            <div className={`p-4 rounded-2xl bg-gray-900 border border-gray-700 ${link.color} group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                                {link.icon}
-                            </div>
-                            <div className="ml-6">
-                                <h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-teal-400 transition-colors">
-                                    {link.name}
-                                </h3>
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
-                                    Official Channel
-                                </p>
-                            </div>
-                            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <svg className="w-6 h-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </div>
-                        </a>
+                    {socialLinks.map((link, idx) => (
+                        <Reveal key={link.name} delay={idx * 100}>
+                            <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center p-8 bg-gray-800 border border-gray-700 rounded-[2rem] shadow-xl hover:border-teal-500/50 hover:bg-gray-800/80 transition-all duration-300 transform hover:-translate-y-2 active:scale-95"
+                            >
+                                <div className={`p-4 rounded-2xl bg-gray-900 border border-gray-700 ${link.color} group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-teal-500/10`}>
+                                    {link.icon}
+                                </div>
+                                <div className="ml-6">
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-teal-400 transition-colors">
+                                        {link.name}
+                                    </h3>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
+                                        Official Channel
+                                    </p>
+                                </div>
+                                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                    <svg className="w-6 h-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </div>
+                            </a>
+                        </Reveal>
                     ))}
                 </div>
 
-                <div className="mt-20 text-center p-12 bg-gray-800/30 rounded-[3rem] border border-gray-700/50 backdrop-blur-sm">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Rotaract Club of RSCOE</h3>
-                    <p className="text-gray-400 text-sm max-w-lg mx-auto leading-relaxed">
-                        We are a community of young leaders committed to creating positive change through service, leadership, and professional excellence.
-                    </p>
-                    <div className="w-24 h-1 bg-teal-500 mx-auto mt-8 rounded-full shadow-[0_0_15px_rgba(20,184,166,0.5)]"></div>
-                </div>
+                <Reveal delay={400}>
+                    <div className="mt-20 text-center p-12 bg-gray-800/30 rounded-[3rem] border border-gray-700/50 backdrop-blur-sm transition-all hover:border-teal-500/20">
+                        <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Rotaract Club of RSCOE</h3>
+                        <p className="text-gray-400 text-sm max-w-lg mx-auto leading-relaxed">
+                            We are a community of young leaders committed to creating positive change through service, leadership, and professional excellence.
+                        </p>
+                        <div className="w-24 h-1 bg-teal-500 mx-auto mt-8 rounded-full shadow-[0_0_15px_rgba(20,184,166,0.5)] animate-pulse"></div>
+                    </div>
+                </Reveal>
             </div>
         </div>
     );

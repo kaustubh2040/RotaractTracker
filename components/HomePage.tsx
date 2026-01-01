@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useClubData } from '../hooks/useClubData';
 import { PublicEvent, User } from '../types';
 import { BOD_POSITIONS } from '../constants';
+import Reveal from './common/Reveal';
+import { SkeletonCard } from './common/Skeleton';
 
 const HomePage: React.FC = () => {
-    const { settings, publicEvents, setCurrentPage, users, registerVisitor } = useClubData();
+    const { settings, publicEvents, setCurrentPage, users, registerVisitor, loading } = useClubData();
     const [selectedEvent, setSelectedEvent] = useState<PublicEvent | null>(null);
     const [regForm, setRegForm] = useState({ name: '', email: '', phone: '' });
     const [regStatus, setRegStatus] = useState<'idle' | 'loading' | 'success'>('idle');
@@ -60,44 +62,48 @@ const HomePage: React.FC = () => {
                     <div className="container mx-auto px-6 lg:px-24">
                         <div className="max-w-5xl mx-auto space-y-12">
                             {/* 1. Full event image (complete, not cropped) */}
-                            <div className="rounded-[2.5rem] overflow-hidden border border-gray-700 shadow-2xl bg-gray-800 flex justify-center">
-                                <img src={selectedEvent.imageUrl} className="w-full h-auto object-contain max-h-[80vh]" alt={selectedEvent.title} />
-                            </div>
+                            <Reveal>
+                                <div className="rounded-[2.5rem] overflow-hidden border border-gray-700 shadow-2xl bg-gray-800 flex justify-center">
+                                    <img src={selectedEvent.imageUrl} className="w-full h-auto object-contain max-h-[80vh]" alt={selectedEvent.title} />
+                                </div>
+                            </Reveal>
 
-                            <div className="bg-gray-800/40 p-8 lg:p-16 rounded-[3rem] border border-gray-700 shadow-xl transition-all duration-500 hover:shadow-teal-500/5">
-                                {/* 2. Event Name */}
-                                <h2 className="text-4xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 leading-none">
-                                    {selectedEvent.title}
-                                </h2>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 pb-12 border-b border-gray-700/50">
-                                    {/* 3. Event Date */}
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Impact Date</p>
-                                        <p className="text-teal-400 font-black uppercase text-sm tracking-widest">{new Date(selectedEvent.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <Reveal delay={200}>
+                                <div className="bg-gray-800/40 p-8 lg:p-16 rounded-[3rem] border border-gray-700 shadow-xl transition-all duration-500 hover:shadow-teal-500/5">
+                                    {/* 2. Event Name */}
+                                    <h2 className="text-4xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 leading-none">
+                                        {selectedEvent.title}
+                                    </h2>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 pb-12 border-b border-gray-700/50">
+                                        {/* 3. Event Date */}
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Impact Date</p>
+                                            <p className="text-teal-400 font-black uppercase text-sm tracking-widest">{new Date(selectedEvent.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                        </div>
+                                        {/* 4. Category */}
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Category</p>
+                                            <p className="text-white font-black uppercase text-sm tracking-widest">{selectedEvent.category}</p>
+                                        </div>
+                                        {/* 5. Host Club */}
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Host Club</p>
+                                            <p className="text-white font-black uppercase text-sm tracking-widest">{selectedEvent.hostClub}</p>
+                                        </div>
                                     </div>
-                                    {/* 4. Category */}
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Category</p>
-                                        <p className="text-white font-black uppercase text-sm tracking-widest">{selectedEvent.category}</p>
-                                    </div>
-                                    {/* 5. Host Club */}
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Host Club</p>
-                                        <p className="text-white font-black uppercase text-sm tracking-widest">{selectedEvent.hostClub}</p>
+
+                                    {/* 6. FULL event description */}
+                                    <div className="space-y-6">
+                                        <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
+                                            <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Archive
+                                        </h3>
+                                        <p className="text-gray-300 text-lg lg:text-xl leading-relaxed whitespace-pre-wrap font-light">
+                                            {selectedEvent.description}
+                                        </p>
                                     </div>
                                 </div>
-
-                                {/* 6. FULL event description */}
-                                <div className="space-y-6">
-                                    <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
-                                        <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Archive
-                                    </h3>
-                                    <p className="text-gray-300 text-lg lg:text-xl leading-relaxed whitespace-pre-wrap font-light">
-                                        {selectedEvent.description}
-                                    </p>
-                                </div>
-                            </div>
+                            </Reveal>
 
                             {/* Back to Home moved to bottom center */}
                             <div className="flex justify-center pt-8">
@@ -153,66 +159,69 @@ const HomePage: React.FC = () => {
 
                 <div className="container mx-auto px-6 lg:px-24 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
                     <div className="lg:col-span-2 space-y-12">
-                        <div className="bg-gray-800/40 p-10 rounded-[2.5rem] border border-gray-700 shadow-xl hover:shadow-teal-500/5 transition-all duration-500">
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-8 flex items-center">
-                                <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Brief
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                                <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-colors">
-                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Category</p>
-                                    <p className="text-sm font-bold text-teal-400 uppercase">{selectedEvent.category}</p>
+                        <Reveal>
+                            <div className="bg-gray-800/40 p-10 rounded-[2.5rem] border border-gray-700 shadow-xl hover:shadow-teal-500/5 transition-all duration-500">
+                                <h3 className="text-xl font-black text-white uppercase tracking-widest mb-8 flex items-center">
+                                    <span className="w-10 h-px bg-teal-500 mr-4"></span> Mission Brief
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                    <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-colors">
+                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Category</p>
+                                        <p className="text-sm font-bold text-teal-400 uppercase">{selectedEvent.category}</p>
+                                    </div>
+                                    <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-colors">
+                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Host Organization</p>
+                                        <p className="text-sm font-bold text-white uppercase">{selectedEvent.hostClub}</p>
+                                    </div>
                                 </div>
-                                <div className="p-4 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-colors">
-                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Host Organization</p>
-                                    <p className="text-sm font-bold text-white uppercase">{selectedEvent.hostClub}</p>
-                                </div>
+                                <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap font-light">
+                                    {selectedEvent.description}
+                                </p>
                             </div>
-                            <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap font-light">
-                                {selectedEvent.description}
-                            </p>
-                        </div>
+                        </Reveal>
                     </div>
 
                     <div className="lg:col-span-1">
-                        {selectedEvent.registrationEnabled ? (
-                            <div className="bg-teal-500/5 p-10 rounded-[2.5rem] border border-teal-500/20 sticky top-28 shadow-2xl backdrop-blur-md transition-all duration-500 hover:border-teal-500/40">
-                                {regStatus === 'success' ? (
-                                    <div className="text-center py-12 animate-fadeIn">
-                                        <div className="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-teal-500/20 animate-bounce">
-                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                                            </svg>
+                        <Reveal delay={200}>
+                            {selectedEvent.registrationEnabled ? (
+                                <div className="bg-teal-500/5 p-10 rounded-[2.5rem] border border-teal-500/20 sticky top-28 shadow-2xl backdrop-blur-md transition-all duration-500 hover:border-teal-500/40">
+                                    {regStatus === 'success' ? (
+                                        <div className="text-center py-12 animate-fadeIn">
+                                            <div className="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-teal-500/20 animate-bounce">
+                                                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight">Access Granted!</h4>
+                                            <p className="text-gray-400 mt-4 text-sm font-medium leading-relaxed">You are now registered for {selectedEvent.title}. See you there!</p>
                                         </div>
-                                        <h4 className="text-2xl font-black text-white uppercase tracking-tight">Access Granted!</h4>
-                                        <p className="text-gray-400 mt-4 text-sm font-medium leading-relaxed">You are now registered for {selectedEvent.title}. See you there!</p>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={handleRegisterSubmit} className="space-y-6">
-                                        <div className="mb-8">
-                                            {/* Updated text to mention event name */}
-                                            <h4 className="text-2xl font-black text-white uppercase tracking-tight leading-tight">Register for {selectedEvent.title}</h4>
-                                            <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Join the impact movement</p>
-                                        </div>
-                                        <input required type="text" value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})} placeholder="Full Name" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium transition-all" />
-                                        <input required type="email" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} placeholder="Email Address" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium transition-all" />
-                                        <input required type="tel" value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} placeholder="WhatsApp Number" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium transition-all" />
-                                        <button disabled={regStatus === 'loading'} className="w-full py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-teal-900/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                                            {regStatus === 'loading' ? 'Authenticating...' : 'Confirm Registration'}
-                                        </button>
-                                    </form>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="bg-gray-800/40 p-12 rounded-[2.5rem] border border-gray-700 text-center flex flex-col items-center hover:border-gray-600 transition-colors">
-                                <div className="w-16 h-16 bg-gray-700 rounded-2xl flex items-center justify-center mb-8 shadow-inner group transition-transform duration-300 hover:rotate-6">
-                                    <svg className="w-8 h-8 text-gray-500 group-hover:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
+                                    ) : (
+                                        <form onSubmit={handleRegisterSubmit} className="space-y-6">
+                                            <div className="mb-8">
+                                                <h4 className="text-2xl font-black text-white uppercase tracking-tight leading-tight">Register for {selectedEvent.title}</h4>
+                                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Join the impact movement</p>
+                                            </div>
+                                            <input required type="text" value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})} placeholder="Full Name" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium transition-all" />
+                                            <input required type="email" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} placeholder="Email Address" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium transition-all" />
+                                            <input required type="tel" value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} placeholder="WhatsApp Number" className="w-full bg-gray-900/50 border border-gray-700 focus:border-teal-500 p-4 rounded-2xl text-white outline-none placeholder-gray-700 font-medium transition-all" />
+                                            <button disabled={regStatus === 'loading'} className="w-full py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-teal-900/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                                                {regStatus === 'loading' ? 'Authenticating...' : 'Confirm Registration'}
+                                            </button>
+                                        </form>
+                                    )}
                                 </div>
-                                <h4 className="text-xl font-black text-white uppercase tracking-tight">Direct Entry</h4>
-                                <p className="text-gray-500 mt-3 text-[10px] font-black uppercase tracking-widest leading-relaxed">Registration portal is currently closed for this event. Direct participation is welcome.</p>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="bg-gray-800/40 p-12 rounded-[2.5rem] border border-gray-700 text-center flex flex-col items-center hover:border-gray-600 transition-colors">
+                                    <div className="w-16 h-16 bg-gray-700 rounded-2xl flex items-center justify-center mb-8 shadow-inner group transition-transform duration-300 hover:rotate-6">
+                                        <svg className="w-8 h-8 text-gray-500 group-hover:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="text-xl font-black text-white uppercase tracking-tight">Direct Entry</h4>
+                                    <p className="text-gray-500 mt-3 text-[10px] font-black uppercase tracking-widest leading-relaxed">Registration portal is currently closed for this event. Direct participation is welcome.</p>
+                                </div>
+                            )}
+                        </Reveal>
                     </div>
                 </div>
             </div>
@@ -255,34 +264,48 @@ const HomePage: React.FC = () => {
             {/* Upcoming Impact - Auto-Filtered by Date */}
             <section className="py-24 bg-gray-800/20">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Next Steps</h3>
-                        <h2 className="text-4xl font-black text-white uppercase tracking-tight">Upcoming Impact</h2>
-                    </div>
+                    <Reveal>
+                        <div className="text-center mb-16">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Next Steps</h3>
+                            <h2 className="text-4xl font-black text-white uppercase tracking-tight">Upcoming Impact</h2>
+                        </div>
+                    </Reveal>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                        {upcomingEvents.length > 0 ? upcomingEvents.map(event => (
-                            <div key={event.id} className="group bg-gray-800 border border-gray-700 rounded-3xl overflow-hidden shadow-xl hover:border-teal-500/50 hover:shadow-teal-500/5 transition-all duration-500 flex flex-col h-full hover:-translate-y-2">
-                                <div className="h-56 overflow-hidden relative">
-                                    <img src={event.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={event.title} />
-                                    <div className="absolute top-4 left-4 bg-teal-500 text-gray-950 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg transform transition-transform group-hover:scale-110">
-                                        {new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        {upcomingEvents.length > 0 ? upcomingEvents.map((event, idx) => (
+                            <Reveal key={event.id} delay={idx * 100}>
+                                <div className="group bg-gray-800 border border-gray-700 rounded-3xl overflow-hidden shadow-xl hover:border-teal-500/50 hover:shadow-teal-500/5 transition-all duration-500 flex flex-col h-full hover:-translate-y-2">
+                                    <div className="h-56 overflow-hidden relative">
+                                        <img src={event.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={event.title} />
+                                        <div className="absolute top-4 left-4 bg-teal-500 text-gray-950 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg transform transition-transform group-hover:scale-110">
+                                            {new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                        </div>
+                                        {/* Card Click Hint Overlay */}
+                                        <div className="absolute inset-0 bg-gray-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] bg-teal-600 px-4 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform">Explore Mission →</span>
+                                        </div>
+                                        <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-teal-400 px-3 py-1 rounded-lg text-[8px] font-black uppercase border border-teal-500/20 tracking-widest transition-colors group-hover:bg-teal-500 group-hover:text-gray-950 group-hover:border-transparent">
+                                            {event.category}
+                                        </div>
                                     </div>
-                                    <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-teal-400 px-3 py-1 rounded-lg text-[8px] font-black uppercase border border-teal-500/20 tracking-widest transition-colors group-hover:bg-teal-500 group-hover:text-gray-950 group-hover:border-transparent">
-                                        {event.category}
+                                    <div className="p-8 flex flex-col flex-1">
+                                        <h4 className="text-xl font-black text-white uppercase tracking-tight mb-3 group-hover:text-teal-400 transition-colors duration-300">{event.title}</h4>
+                                        <p className="text-sm text-gray-400 leading-relaxed mb-6 line-clamp-3 font-light">{event.description}</p>
+                                        <div className="mt-auto">
+                                            <button onClick={() => { setSelectedEvent(event); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full py-4 bg-gray-700 group-hover:bg-teal-600 text-[10px] font-black uppercase tracking-widest text-teal-400 group-hover:text-white rounded-2xl border border-teal-500/10 group-hover:border-transparent transition-all shadow-xl active:scale-95 duration-300">
+                                                View Mission Details
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-8 flex flex-col flex-1">
-                                    <h4 className="text-xl font-black text-white uppercase tracking-tight mb-3 group-hover:text-teal-400 transition-colors duration-300">{event.title}</h4>
-                                    <p className="text-sm text-gray-400 leading-relaxed mb-6 line-clamp-3 font-light">{event.description}</p>
-                                    <div className="mt-auto">
-                                        <button onClick={() => { setSelectedEvent(event); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full py-4 bg-gray-700 group-hover:bg-teal-600 text-[10px] font-black uppercase tracking-widest text-teal-400 group-hover:text-white rounded-2xl border border-teal-500/10 group-hover:border-transparent transition-all shadow-xl active:scale-95 duration-300">
-                                            View Mission Details
-                                        </button>
-                                    </div>
-                                </div>
+                            </Reveal>
+                        )) : loading ? (
+                            <div className="col-span-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <SkeletonCard />
+                                <SkeletonCard />
+                                <SkeletonCard />
                             </div>
-                        )) : (
+                        ) : (
                             <p className="text-center text-gray-600 italic py-12 col-span-full">No scheduled missions at the moment. Impact reports coming soon.</p>
                         )}
                     </div>
@@ -292,30 +315,39 @@ const HomePage: React.FC = () => {
             {/* Recent Impact Portfolio */}
             <section className="py-24 bg-gray-900 border-t border-gray-800">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Portfolio</h3>
-                        <h2 className="text-4xl font-black text-white uppercase tracking-tight">Recent Impact</h2>
-                    </div>
+                    <Reveal>
+                        <div className="text-center mb-16">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">Portfolio</h3>
+                            <h2 className="text-4xl font-black text-white uppercase tracking-tight">Recent Impact</h2>
+                        </div>
+                    </Reveal>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {recentEvents.length > 0 ? recentEvents.map(event => (
-                            <div 
-                                key={event.id} 
-                                className="group bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 hover:border-teal-500/50 hover:shadow-teal-500/5 transition-all duration-500 hover:-translate-y-2 cursor-pointer"
-                                onClick={() => setSelectedEvent(event)}
-                            >
-                                <div className="h-48 overflow-hidden relative">
-                                    <img src={event.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={event.title} />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent transition-opacity group-hover:opacity-60"></div>
+                        {recentEvents.length > 0 ? recentEvents.map((event, idx) => (
+                            <Reveal key={event.id} delay={idx * 50}>
+                                <div 
+                                    className="group bg-gray-800 rounded-3xl overflow-hidden border border-gray-700 hover:border-teal-500/50 hover:shadow-teal-500/5 transition-all duration-500 hover:-translate-y-2 cursor-pointer relative"
+                                    onClick={() => setSelectedEvent(event)}
+                                >
+                                    <div className="h-48 overflow-hidden relative">
+                                        <img src={event.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={event.title} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent transition-opacity group-hover:opacity-60"></div>
+                                        {/* Hint text */}
+                                        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                            <span className="text-[9px] font-black text-teal-400 uppercase tracking-widest flex items-center bg-gray-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-teal-500/20">
+                                                Archive <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="p-6">
+                                        <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest group-hover:text-teal-300 transition-colors">{new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                        <h4 className="text-lg font-black text-white mt-2 group-hover:text-teal-400 transition-colors uppercase leading-tight duration-300">{event.title}</h4>
+                                        <p className="text-[11px] text-gray-500 mt-4 line-clamp-3 leading-relaxed font-medium">
+                                            {event.description}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="p-6">
-                                    <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest group-hover:text-teal-300 transition-colors">{new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                    <h4 className="text-lg font-black text-white mt-2 group-hover:text-teal-400 transition-colors uppercase leading-tight duration-300">{event.title}</h4>
-                                    <p className="text-[11px] text-gray-500 mt-4 line-clamp-3 leading-relaxed font-medium">
-                                        {event.description}
-                                    </p>
-                                </div>
-                            </div>
+                            </Reveal>
                         )) : (
                             <p className="text-gray-600 col-span-full py-12 text-center italic">Archive portal initializing impact records.</p>
                         )}
@@ -326,55 +358,63 @@ const HomePage: React.FC = () => {
             {/* Board of Directors Showcase - Centered & Top 2 Only */}
             <section className="py-24 bg-gray-900 overflow-hidden border-t border-gray-800">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-16 max-w-2xl mx-auto">
-                        <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-teal-400 mb-3">Leadership Team</h3>
-                        <h2 className="text-4xl lg:text-5xl font-black text-white uppercase tracking-tight leading-none mb-6">Board of Directors</h2>
-                        <div className="w-24 h-1 bg-teal-500 mx-auto rounded-full shadow-[0_0_15px_rgba(20,184,166,0.5)] animate-pulse"></div>
-                    </div>
+                    <Reveal>
+                        <div className="text-center mb-16 max-w-2xl mx-auto">
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-teal-400 mb-3">Leadership Team</h3>
+                            <h2 className="text-4xl lg:text-5xl font-black text-white uppercase tracking-tight leading-none mb-6">Board of Directors</h2>
+                            <div className="w-24 h-1 bg-teal-500 mx-auto rounded-full shadow-[0_0_15px_rgba(20,184,166,0.5)] animate-pulse"></div>
+                        </div>
+                    </Reveal>
 
                     <div className="flex flex-wrap justify-center gap-8 lg:gap-16 max-w-5xl mx-auto mb-20">
-                        {homeBOD.map(member => (
-                            <div key={member.id} className="group relative w-full sm:w-72 lg:w-80">
-                                <div className="relative aspect-[4/5] bg-gray-800 rounded-[3rem] overflow-hidden border border-gray-700 group-hover:border-teal-500/50 transition-all duration-700 shadow-2xl group-hover:-translate-y-4 hover:shadow-teal-500/10">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent z-10"></div>
-                                    {member.photoUrl ? (
-                                        <img src={member.photoUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={member.name} />
-                                    ) : (
-                                        <div className="w-full h-full bg-gray-950 flex items-center justify-center">
-                                            <svg className="w-24 h-24 text-gray-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                        </div>
-                                    )}
-                                    <div className="absolute bottom-10 left-8 right-8 z-20 transition-transform duration-500 group-hover:translate-y-[-8px]">
-                                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 group-hover:text-teal-400 transition-colors leading-none">{member.name}</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {member.positions?.map(pos => (
-                                                <span key={pos} className="bg-teal-500/10 text-teal-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-teal-500/20 transition-all group-hover:bg-teal-500/20 group-hover:border-teal-500/40">{pos}</span>
-                                            ))}
+                        {homeBOD.map((member, idx) => (
+                            <Reveal key={member.id} width="fit-content" delay={idx * 200}>
+                                <div className="group relative w-full sm:w-72 lg:w-80">
+                                    <div className="relative aspect-[4/5] bg-gray-800 rounded-[3rem] overflow-hidden border border-gray-700 group-hover:border-teal-500/50 transition-all duration-700 shadow-2xl group-hover:-translate-y-4 hover:shadow-teal-500/10">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent z-10"></div>
+                                        {member.photoUrl ? (
+                                            <img src={member.photoUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={member.name} />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-950 flex items-center justify-center">
+                                                <svg className="w-24 h-24 text-gray-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                            </div>
+                                        )}
+                                        <div className="absolute bottom-10 left-8 right-8 z-20 transition-transform duration-500 group-hover:translate-y-[-8px]">
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 group-hover:text-teal-400 transition-colors leading-none">{member.name}</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {member.positions?.map(pos => (
+                                                    <span key={pos} className="bg-teal-500/10 text-teal-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-teal-500/20 transition-all group-hover:bg-teal-500/20 group-hover:border-teal-500/40">{pos}</span>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Reveal>
                         ))}
                     </div>
 
-                    <div className="flex justify-center">
-                        <button 
-                            onClick={() => setCurrentPage('bod-all')}
-                            className="group flex items-center space-x-3 px-12 py-5 bg-gray-800 hover:bg-teal-600 text-teal-400 hover:text-white border border-teal-500/30 font-black uppercase tracking-[0.2em] text-[11px] rounded-full transition-all shadow-2xl hover:shadow-teal-500/20 active:scale-95 duration-300"
-                        >
-                            <span>Explore Full Leadership Cabinet</span>
-                            <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
-                        </button>
-                    </div>
+                    <Reveal delay={400}>
+                        <div className="flex justify-center">
+                            <button 
+                                onClick={() => setCurrentPage('bod-all')}
+                                className="group flex items-center space-x-3 px-12 py-5 bg-gray-800 hover:bg-teal-600 text-teal-400 hover:text-white border border-teal-500/30 font-black uppercase tracking-[0.2em] text-[11px] rounded-full transition-all shadow-2xl hover:shadow-teal-500/20 active:scale-95 duration-300"
+                            >
+                                <span>Explore Full Leadership Cabinet</span>
+                                <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </button>
+                        </div>
+                    </Reveal>
                 </div>
             </section>
 
             <footer className="py-20 bg-gray-900 border-t border-gray-800 text-center">
-                <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-2 hover:scale-105 transition-transform duration-500 inline-block cursor-default">{settings.appName}</h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-6">{settings.appSubtitle}</p>
-                <div className="mt-12 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 transition-opacity hover:opacity-100 opacity-60 italic">&copy; 2025 • Built by <span className="text-teal-400 font-bold">Kaustubh Patil</span> • All rights reserved</div>
+                <Reveal>
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-2 hover:scale-105 transition-transform duration-500 inline-block cursor-default">{settings.appName}</h2>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-6">{settings.appSubtitle}</p>
+                    <div className="mt-12 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 transition-opacity hover:opacity-100 opacity-60 italic">&copy; 2025 • Built by <span className="text-teal-400 font-bold">Kaustubh Patil</span> • All rights reserved</div>
+                </Reveal>
             </footer>
         </div>
     );

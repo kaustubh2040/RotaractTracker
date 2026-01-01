@@ -7,12 +7,14 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { ActivityType, PublicEvent } from '../types';
 import MemberManagement from './MemberManagement';
 import ImageUploadField from './common/ImageUploadField';
+import Reveal from './common/Reveal';
+import { Skeleton } from './common/Skeleton';
 
 const AdminDashboard: React.FC = () => {
     const { 
         currentUser, memberStats, activities, addAnnouncement, sendNotification, members, dbStatus, 
         publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations,
-        settings, updateSettings, aboutContent, updateAboutContent, updateMember
+        settings, updateSettings, aboutContent, updateAboutContent, updateMember, loading
     } = useClubData();
     
     const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings' | 'profile'>('overview');
@@ -168,13 +170,13 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className="flex flex-col md:flex-row min-h-[calc(100vh-8rem)]">
-            <aside className="w-full md:w-64 bg-gray-800/50 rounded-2xl p-4 mb-6 md:mb-0 md:mr-8 border border-gray-700 h-fit">
+            <aside className="w-full md:w-64 bg-gray-800/50 rounded-2xl p-4 mb-6 md:mb-0 md:mr-8 border border-gray-700 h-fit transition-all duration-300">
                 <nav className="space-y-1">
                     {navItems.map(item => (
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id as any)}
-                            className={`w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${
+                            className={`w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all active:scale-[0.97] ${
                                 activeTab === item.id ? 'bg-teal-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                             }`}
                         >
@@ -188,351 +190,382 @@ const AdminDashboard: React.FC = () => {
             <div className="flex-1 space-y-6">
                 {activeTab === 'overview' && (
                     <div className="space-y-6 animate-fadeIn">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card title="Impact Score" className="border-l-4 border-teal-500">
-                                <p className="text-4xl font-black text-white">{memberStats.reduce((s,m) => s+m.totalPoints, 0)}</p>
-                                <p className="text-[10px] uppercase font-bold text-teal-400 mt-2">Combined Member Points</p>
-                            </Card>
-                            <Card title="Active Signups" className="border-l-4 border-orange-500">
-                                <p className="text-4xl font-black text-white">{activeRegistrations.length}</p>
-                                <p className="text-[10px] uppercase font-bold text-orange-400 mt-2">Registrations (Recent)</p>
-                            </Card>
-                            <Card title="Status" className="border-l-4 border-blue-500">
-                                <p className="text-xl font-black text-white uppercase">{dbStatus === 'connected' ? 'Synced' : 'Local'}</p>
-                                <p className="text-[10px] uppercase font-bold text-blue-400 mt-2">Database Connection</p>
-                            </Card>
-                        </div>
-                        <div style={{ height: 350 }}>
-                            <ResponsiveContainer>
-                                <BarChart data={chartData}>
-                                    <XAxis dataKey="name" axisLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
-                                    <YAxis axisLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
-                                    <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
-                                    <Bar dataKey="count" fill="#2dd4bf" radius={[4, 4, 0, 0]} barSize={40} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <Reveal>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Card title="Impact Score" className="border-l-4 border-teal-500 hover:shadow-teal-500/10">
+                                    {loading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-black text-white">{memberStats.reduce((s,m) => s+m.totalPoints, 0)}</p>}
+                                    <p className="text-[10px] uppercase font-bold text-teal-400 mt-2">Combined Member Points</p>
+                                </Card>
+                                <Card title="Active Signups" className="border-l-4 border-orange-500 hover:shadow-orange-500/10">
+                                    {loading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-black text-white">{activeRegistrations.length}</p>}
+                                    <p className="text-[10px] uppercase font-bold text-orange-400 mt-2">Registrations (Recent)</p>
+                                </Card>
+                                <Card title="Status" className="border-l-4 border-blue-500 hover:shadow-blue-500/10">
+                                    <p className="text-xl font-black text-white uppercase">{dbStatus === 'connected' ? 'Synced' : 'Local'}</p>
+                                    <p className="text-[10px] uppercase font-bold text-blue-400 mt-2">Database Connection</p>
+                                </Card>
+                            </div>
+                        </Reveal>
+                        <Reveal delay={200}>
+                            <div style={{ height: 350 }} className="bg-gray-800/20 p-4 rounded-2xl border border-gray-800">
+                                {loading ? (
+                                    <Skeleton className="w-full h-full" />
+                                ) : (
+                                    <ResponsiveContainer>
+                                        <BarChart data={chartData}>
+                                            <XAxis dataKey="name" axisLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                            <YAxis axisLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                            <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                                            <Bar dataKey="count" fill="#2dd4bf" radius={[4, 4, 0, 0]} barSize={40} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </Reveal>
                     </div>
                 )}
 
                 {activeTab === 'profile' && currentUser && (
-                    <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
-                        <Card title="Identity Management">
-                            <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800">
-                                <p className="text-[10px] font-black uppercase text-gray-500 mb-2 tracking-[0.2em] ml-1 text-center">Account Record</p>
-                                <div className="text-center space-y-2">
-                                    <h4 className="text-3xl font-black text-white uppercase tracking-tighter">{currentUser.name}</h4>
-                                    <div className="flex justify-center gap-2">
-                                        {currentUser.positions?.map(p => (
-                                            <span key={p} className="bg-gray-800 text-teal-400 border border-teal-500/10 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{p}</span>
-                                        ))}
-                                    </div>
-                                    <p className="text-[9px] text-gray-600 font-bold uppercase mt-6 italic tracking-widest leading-relaxed">Identity Lock: Name and Position are fixed. For any updates, contact System Administrator.</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                <ImageUploadField 
-                                    label="Profile Photo"
-                                    value={newPhoto}
-                                    onChange={setNewPhoto}
-                                    folder="profiles"
-                                    placeholder="https://raw.githubusercontent.com/..."
-                                />
-                                
-                                <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10 text-left">
-                                    <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        Tip
-                                    </h5>
-                                    <p className="text-[11px] text-gray-500 leading-relaxed">Direct upload stores your image securely in our cloud. Your profile will be updated across the entire platform instantly.</p>
-                                </div>
-
-                                <div className="border-t border-gray-700 pt-6">
-                                    {!isUpdatingPassword ? (
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setIsUpdatingPassword(true)}
-                                            className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors"
-                                        >
-                                            + Update Access Pin
-                                        </button>
-                                    ) : (
-                                        <div className="space-y-4 animate-fadeIn">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
-                                                <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
-                                            </div>
-                                            
-                                            {!isVerified ? (
-                                                <div className="space-y-2">
-                                                    <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
-                                                    <div className="flex gap-2">
-                                                        <input 
-                                                            type="password" 
-                                                            value={currentPass}
-                                                            onChange={e => setCurrentPass(e.target.value)}
-                                                            placeholder="Current PIN" 
-                                                            className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                        />
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={handleVerifyCurrentPassword}
-                                                            className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl"
-                                                        >
-                                                            Verify
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
-                                                        <input 
-                                                            type="password" 
-                                                            value={newPass}
-                                                            onChange={e => setNewPass(e.target.value)}
-                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
-                                                        <input 
-                                                            type="password" 
-                                                            value={confirmPass}
-                                                            onChange={e => setConfirmPass(e.target.value)}
-                                                            className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {passError && <p className="text-[10px] text-rose-400 font-bold uppercase ml-1">{passError}</p>}
+                    <Reveal>
+                        <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
+                            <Card title="Identity Management">
+                                <div className="mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-800">
+                                    <p className="text-[10px] font-black uppercase text-gray-500 mb-2 tracking-[0.2em] ml-1 text-center">Account Record</p>
+                                    <div className="text-center space-y-2">
+                                        <h4 className="text-3xl font-black text-white uppercase tracking-tighter">{currentUser.name}</h4>
+                                        <div className="flex justify-center gap-2">
+                                            {currentUser.positions?.map(p => (
+                                                <span key={p} className="bg-gray-800 text-teal-400 border border-teal-500/10 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{p}</span>
+                                            ))}
                                         </div>
-                                    )}
+                                        <p className="text-[9px] text-gray-600 font-bold uppercase mt-6 italic tracking-widest leading-relaxed">Identity Lock: Name and Position are fixed. For any updates, contact System Administrator.</p>
+                                    </div>
                                 </div>
 
-                                <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Access</button>
-                            </form>
-                        </Card>
-                    </div>
+                                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                                    <ImageUploadField 
+                                        label="Profile Photo"
+                                        value={newPhoto}
+                                        onChange={setNewPhoto}
+                                        folder="profiles"
+                                        placeholder="https://raw.githubusercontent.com/..."
+                                    />
+                                    
+                                    <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10 text-left">
+                                        <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
+                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            Tip
+                                        </h5>
+                                        <p className="text-[11px] text-gray-500 leading-relaxed">Direct upload stores your image securely in our cloud. Your profile will be updated across the entire platform instantly.</p>
+                                    </div>
+
+                                    <div className="border-t border-gray-700 pt-6">
+                                        {!isUpdatingPassword ? (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setIsUpdatingPassword(true)}
+                                                className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors active:scale-95"
+                                            >
+                                                + Update Access Pin
+                                            </button>
+                                        ) : (
+                                            <div className="space-y-4 animate-fadeIn">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
+                                                    <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
+                                                </div>
+                                                
+                                                {!isVerified ? (
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
+                                                        <div className="flex gap-2">
+                                                            <input 
+                                                                type="password" 
+                                                                value={currentPass}
+                                                                onChange={e => setCurrentPass(e.target.value)}
+                                                                placeholder="Current PIN" 
+                                                                className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                            />
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={handleVerifyCurrentPassword}
+                                                                className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl active:scale-95 transition-all"
+                                                            >
+                                                                Verify
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
+                                                            <input 
+                                                                type="password" 
+                                                                value={newPass}
+                                                                onChange={e => setNewPass(e.target.value)}
+                                                                className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
+                                                            <input 
+                                                                type="password" 
+                                                                value={confirmPass}
+                                                                onChange={e => setConfirmPass(e.target.value)}
+                                                                className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {passError && <p className="text-[10px] text-rose-400 font-bold uppercase ml-1">{passError}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Access</button>
+                                </form>
+                            </Card>
+                        </div>
+                    </Reveal>
                 )}
 
                 {activeTab === 'settings' && (
-                    <div className="space-y-6 animate-fadeIn">
-                        <Card title="Branding & Visuals">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Application Name</label>
-                                    <input 
-                                        value={tempSettings.appName} 
-                                        onChange={e => setTempSettings({...tempSettings, appName: e.target.value})} 
-                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">App Subtitle</label>
-                                    <input 
-                                        value={tempSettings.appSubtitle} 
-                                        onChange={e => setTempSettings({...tempSettings, appSubtitle: e.target.value})} 
-                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <ImageUploadField 
-                                        label="Club Logo"
-                                        value={tempSettings.clubLogoUrl}
-                                        onChange={url => setTempSettings({...tempSettings, clubLogoUrl: url})}
-                                        folder="logos"
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <ImageUploadField 
-                                        label="About Section – Group Image"
-                                        value={tempSettings.aboutGroupImageUrl || ''}
-                                        onChange={url => setTempSettings({...tempSettings, aboutGroupImageUrl: url})}
-                                        folder="events"
-                                    />
-                                </div>
-                            </div>
-                        </Card>
-
-                        <Card title="About Content">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Introduction</label>
-                                    <textarea 
-                                        value={tempAbout.intro} 
-                                        onChange={e => setTempAbout({...tempAbout, intro: e.target.value})} 
-                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Reveal>
+                        <div className="space-y-6 animate-fadeIn">
+                            <Card title="Branding & Visuals">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Vision</label>
-                                        <textarea 
-                                            value={tempAbout.vision} 
-                                            onChange={e => setTempAbout({...tempAbout, vision: e.target.value})} 
-                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Application Name</label>
+                                        <input 
+                                            value={tempSettings.appName} 
+                                            onChange={e => setTempSettings({...tempSettings, appName: e.target.value})} 
+                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Mission</label>
+                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">App Subtitle</label>
+                                        <input 
+                                            value={tempSettings.appSubtitle} 
+                                            onChange={e => setTempSettings({...tempSettings, appSubtitle: e.target.value})} 
+                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <ImageUploadField 
+                                            label="Club Logo"
+                                            value={tempSettings.clubLogoUrl}
+                                            onChange={url => setTempSettings({...tempSettings, clubLogoUrl: url})}
+                                            folder="logos"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <ImageUploadField 
+                                            label="About Section – Group Image"
+                                            value={tempSettings.aboutGroupImageUrl || ''}
+                                            onChange={url => setTempSettings({...tempSettings, aboutGroupImageUrl: url})}
+                                            folder="events"
+                                        />
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card title="About Content">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Introduction</label>
                                         <textarea 
-                                            value={tempAbout.mission} 
-                                            onChange={e => setTempAbout({...tempAbout, mission: e.target.value})} 
+                                            value={tempAbout.intro} 
+                                            onChange={e => setTempAbout({...tempAbout, intro: e.target.value})} 
+                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Vision</label>
+                                            <textarea 
+                                                value={tempAbout.vision} 
+                                                onChange={e => setTempAbout({...tempAbout, vision: e.target.value})} 
+                                                className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Mission</label>
+                                            <textarea 
+                                                value={tempAbout.mission} 
+                                                onChange={e => setTempAbout({...tempAbout, mission: e.target.value})} 
+                                                className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Core Values</label>
+                                        <textarea 
+                                            value={tempAbout.values} 
+                                            onChange={e => setTempAbout({...tempAbout, values: e.target.value})} 
                                             className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Core Values</label>
-                                    <textarea 
-                                        value={tempAbout.values} 
-                                        onChange={e => setTempAbout({...tempAbout, values: e.target.value})} 
-                                        className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
-                                    />
-                                </div>
-                            </div>
-                        </Card>
+                            </Card>
 
-                        <button 
-                            onClick={handleUpdateSettings} 
-                            className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-[0.98]"
-                        >
-                            Save All Preferences
-                        </button>
-                    </div>
+                            <button 
+                                onClick={handleUpdateSettings} 
+                                className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-[0.98]"
+                            >
+                                Save All Preferences
+                            </button>
+                        </div>
+                    </Reveal>
                 )}
 
                 {activeTab === 'events' && (
                     <div className="space-y-6 animate-fadeIn">
-                        <Card title={editingEventId ? "Edit Existing Event" : "Publish New Event"}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <input value={evtTitle} onChange={e => setEvtTitle(e.target.value)} placeholder="Event Title" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                    <input value={evtDate} onChange={e => setEvtDate(e.target.value)} type="date" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                    <input value={evtVenue} onChange={e => setEvtVenue(e.target.value)} placeholder="Venue" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                </div>
-                                <div className="space-y-4">
-                                    <input value={evtCategory} onChange={e => setEvtCategory(e.target.value)} placeholder="Category" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                    <input value={evtHostClub} onChange={e => setEvtHostClub(e.target.value)} placeholder="Host Club" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                            <span className="text-[10px] font-black uppercase text-gray-500">Reg Portal</span>
-                                            <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" />
-                                        </div>
-                                        <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                            <span className="text-[10px] font-black uppercase text-gray-500">Upcoming</span>
-                                            <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                        <Reveal>
+                            <Card title={editingEventId ? "Edit Existing Event" : "Publish New Event"}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <input value={evtTitle} onChange={e => setEvtTitle(e.target.value)} placeholder="Event Title" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                        <input value={evtDate} onChange={e => setEvtDate(e.target.value)} type="date" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                        <input value={evtVenue} onChange={e => setEvtVenue(e.target.value)} placeholder="Venue" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <input value={evtCategory} onChange={e => setEvtCategory(e.target.value)} placeholder="Category" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                        <input value={evtHostClub} onChange={e => setEvtHostClub(e.target.value)} placeholder="Host Club" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                                <span className="text-[10px] font-black uppercase text-gray-500">Reg Portal</span>
+                                                <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                                            </div>
+                                            <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                                <span className="text-[10px] font-black uppercase text-gray-500">Upcoming</span>
+                                                <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="md:col-span-2">
-                                    <ImageUploadField 
-                                        label="Event Image"
-                                        value={evtImg}
-                                        onChange={setEvtImg}
-                                        folder="events"
-                                    />
+                                    <div className="md:col-span-2">
+                                        <ImageUploadField 
+                                            label="Event Image"
+                                            value={evtImg}
+                                            onChange={setEvtImg}
+                                            folder="events"
+                                        />
+                                    </div>
+                                    
+                                    <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Event Story/Mission..." className="md:col-span-2 p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-32" />
                                 </div>
-                                
-                                <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Event Story/Mission..." className="md:col-span-2 p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-32" />
-                            </div>
-                            <div className="mt-6 flex space-x-3">
-                                <button onClick={handleSaveEvent} className="flex-1 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold shadow-lg transition-all">{editingEventId ? 'Update Event' : 'Publish to Feed'}</button>
-                                {editingEventId && <button onClick={() => { setEditingEventId(null); setEvtTitle(''); }} className="px-6 py-3 bg-gray-700 rounded-xl font-bold">Cancel</button>}
-                            </div>
-                        </Card>
+                                <div className="mt-6 flex space-x-3">
+                                    <button onClick={handleSaveEvent} className="flex-1 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold shadow-lg transition-all active:scale-95">{editingEventId ? 'Update Event' : 'Publish to Feed'}</button>
+                                    {editingEventId && <button onClick={() => { setEditingEventId(null); setEvtTitle(''); }} className="px-6 py-3 bg-gray-700 rounded-xl font-bold active:scale-95">Cancel</button>}
+                                </div>
+                            </Card>
+                        </Reveal>
 
                         <div className="space-y-4">
-                            {publicEvents.map(evt => (
-                                <div key={evt.id} className="p-4 bg-gray-800 rounded-2xl border border-gray-700 flex justify-between items-center">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="w-12 h-12 bg-gray-900 rounded-lg overflow-hidden shadow-inner">
-                                            <img src={evt.imageUrl} className="w-full h-full object-cover" />
+                            {publicEvents.map((evt, idx) => (
+                                <Reveal key={evt.id} delay={idx * 50}>
+                                    <div className="group p-4 bg-gray-800 rounded-2xl border border-gray-700 flex justify-between items-center transition-all hover:border-teal-500/30 hover:shadow-teal-500/5">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 bg-gray-900 rounded-lg overflow-hidden shadow-inner group-hover:scale-110 transition-transform">
+                                                <img src={evt.imageUrl} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-white font-bold group-hover:text-teal-400 transition-colors">{evt.title}</h4>
+                                                <p className="text-[10px] text-gray-500 uppercase font-black">{new Date(evt.date).toLocaleDateString()} • {evt.category}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="text-white font-bold">{evt.title}</h4>
-                                            <p className="text-[10px] text-gray-500 uppercase font-black">{new Date(evt.date).toLocaleDateString()} • {evt.category}</p>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => handleEditEvent(evt)} className="text-teal-400 hover:bg-teal-400/10 p-2 rounded-lg transition-all active:scale-90">Edit</button>
+                                            <button onClick={() => deletePublicEvent(evt.id)} className="text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg transition-all active:scale-90">Delete</button>
                                         </div>
                                     </div>
-                                    <div className="flex space-x-2">
-                                        <button onClick={() => handleEditEvent(evt)} className="text-teal-400 hover:bg-teal-400/10 p-2 rounded-lg transition-all">Edit</button>
-                                        <button onClick={() => deletePublicEvent(evt.id)} className="text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg transition-all">Delete</button>
-                                    </div>
-                                </div>
+                                </Reveal>
                             ))}
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'registrations' && (
-                    <Card title="Visitor Registrations (Active Window)">
-                        <div className="space-y-4">
-                            {activeRegistrations.length > 0 ? activeRegistrations.map(reg => (
-                                <div key={reg.id} className="p-4 bg-gray-900/50 rounded-xl border border-gray-700 flex justify-between items-center">
-                                    <div>
-                                        <h4 className="text-white font-black uppercase text-sm">{reg.name}</h4>
-                                        <p className="text-[10px] text-teal-400 font-bold uppercase tracking-widest">{reg.eventTitle} &bull; {new Date(reg.eventDate).toLocaleDateString()}</p>
-                                        <div className="mt-2 text-xs text-gray-400">
-                                            <p>Email: {reg.email}</p>
-                                            <p>Phone: {reg.phone}</p>
+                    <Reveal>
+                        <Card title="Visitor Registrations (Active Window)">
+                            <div className="space-y-4">
+                                {loading ? (
+                                    <>
+                                        <Skeleton className="h-20 w-full" />
+                                        <Skeleton className="h-20 w-full" />
+                                    </>
+                                ) : activeRegistrations.length > 0 ? activeRegistrations.map((reg, idx) => (
+                                    <Reveal key={reg.id} delay={idx * 50}>
+                                        <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-700 flex justify-between items-center hover:border-teal-500/30 transition-all">
+                                            <div>
+                                                <h4 className="text-white font-black uppercase text-sm">{reg.name}</h4>
+                                                <p className="text-[10px] text-teal-400 font-bold uppercase tracking-widest">{reg.eventTitle} &bull; {new Date(reg.eventDate).toLocaleDateString()}</p>
+                                                <div className="mt-2 text-xs text-gray-400">
+                                                    <p>Email: {reg.email}</p>
+                                                    <p>Phone: {reg.phone}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] text-gray-600 font-black uppercase">Registered On</p>
+                                                <p className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[9px] text-gray-600 font-black uppercase">Registered On</p>
-                                        <p className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                            )) : <p className="text-center py-12 text-gray-600 italic">No registrations found for recent/upcoming events.</p>}
-                        </div>
-                    </Card>
+                                    </Reveal>
+                                )) : <p className="text-center py-12 text-gray-600 italic">No registrations found for recent/upcoming events.</p>}
+                            </div>
+                        </Card>
+                    </Reveal>
                 )}
 
-                {activeTab === 'approvals' && <PendingApprovals />}
-                {activeTab === 'members' && <MemberManagement />}
+                {activeTab === 'approvals' && <Reveal><PendingApprovals /></Reveal>}
+                {activeTab === 'members' && <Reveal><MemberManagement /></Reveal>}
                 {activeTab === 'communications' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
-                        <Card title="Global Broadcast">
-                            <textarea value={msg} onChange={e => setMsg(e.target.value)} className="w-full h-32 p-4 bg-gray-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600" placeholder="Post club-wide announcement..." />
-                            <button onClick={() => { addAnnouncement(msg); setMsg(''); alert('Broadcasted!'); }} className="mt-4 w-full py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold shadow-lg shadow-teal-900/20">Send Broadcast</button>
-                        </Card>
-                        <Card title="Direct Notify">
-                            <select value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full p-3 bg-gray-700 rounded-xl mb-4 text-white border border-gray-600 outline-none">
-                                <option value="">Target Member...</option>
-                                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                            </select>
-                            <input value={targetMsg} onChange={e => setTargetMsg(e.target.value)} placeholder="Alert text..." className="w-full p-3 bg-gray-700 rounded-xl mb-4 text-white border border-gray-600 outline-none" />
-                            <button onClick={() => { sendNotification(targetUser, targetMsg); setTargetMsg(''); alert('Alert Sent!'); }} className="w-full py-3 bg-gray-600 text-teal-400 border border-teal-500/30 rounded-xl font-bold transition-all">Send Private Notification</button>
-                        </Card>
-                    </div>
+                    <Reveal>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+                            <Card title="Global Broadcast">
+                                <textarea value={msg} onChange={e => setMsg(e.target.value)} className="w-full h-32 p-4 bg-gray-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600 transition-all" placeholder="Post club-wide announcement..." />
+                                <button onClick={() => { addAnnouncement(msg); setMsg(''); alert('Broadcasted!'); }} className="mt-4 w-full py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold shadow-lg shadow-teal-900/20 active:scale-[0.98] transition-all">Send Broadcast</button>
+                            </Card>
+                            <Card title="Direct Notify">
+                                <select value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full p-3 bg-gray-700 rounded-xl mb-4 text-white border border-gray-600 outline-none focus:ring-2 focus:ring-teal-500 transition-all">
+                                    <option value="">Target Member...</option>
+                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                                <input value={targetMsg} onChange={e => setTargetMsg(e.target.value)} placeholder="Alert text..." className="w-full p-3 bg-gray-700 rounded-xl mb-4 text-white border border-gray-600 outline-none focus:ring-2 focus:ring-teal-500 transition-all" />
+                                <button onClick={() => { sendNotification(targetUser, targetMsg); setTargetMsg(''); alert('Alert Sent!'); }} className="w-full py-3 bg-gray-600 text-teal-400 border border-teal-500/30 rounded-xl font-bold transition-all active:scale-[0.98]">Send Private Notification</button>
+                            </Card>
+                        </div>
+                    </Reveal>
                 )}
                 {activeTab === 'feedback' && (
-                    <Card title="Feedbacks & Queries">
-                        <div className="space-y-4">
-                            {feedbacks.map(f => (
-                                <div key={f.id} className="p-6 bg-gray-900/50 rounded-2xl border border-gray-700">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h4 className="text-white font-bold">{f.subject}</h4>
-                                        <span className="text-[10px] text-teal-500 font-black">{f.userName}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-400 italic mb-4">"{f.message}"</p>
-                                    {!f.reply ? (
-                                        <div className="flex space-x-2">
-                                            <input 
-                                                value={replyText[f.id] || ''} 
-                                                onChange={e => setReplyText(prev => ({ ...prev, [f.id]: e.target.value }))}
-                                                placeholder="Write reply..." 
-                                                className="flex-1 p-2 bg-gray-700 rounded-lg text-xs"
-                                            />
-                                            <button onClick={() => { replyToFeedback(f.id, replyText[f.id]); alert('Replied!'); }} className="px-3 py-2 bg-teal-600 rounded-lg text-xs font-bold">Reply</button>
+                    <Reveal>
+                        <Card title="Feedbacks & Queries">
+                            <div className="space-y-4">
+                                {feedbacks.map((f, idx) => (
+                                    <Reveal key={f.id} delay={idx * 50}>
+                                        <div className="p-6 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-all">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="text-white font-bold">{f.subject}</h4>
+                                                <span className="text-[10px] text-teal-500 font-black">{f.userName}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-400 italic mb-4">"{f.message}"</p>
+                                            {!f.reply ? (
+                                                <div className="flex space-x-2">
+                                                    <input 
+                                                        value={replyText[f.id] || ''} 
+                                                        onChange={e => setReplyText(prev => ({ ...prev, [f.id]: e.target.value }))}
+                                                        placeholder="Write reply..." 
+                                                        className="flex-1 p-2 bg-gray-700 rounded-lg text-xs outline-none focus:ring-1 focus:ring-teal-500 transition-all"
+                                                    />
+                                                    <button onClick={() => { replyToFeedback(f.id, replyText[f.id]); alert('Replied!'); }} className="px-3 py-2 bg-teal-600 rounded-lg text-xs font-bold active:scale-95 transition-all">Reply</button>
+                                                </div>
+                                            ) : <div className="p-3 bg-teal-500/10 rounded-xl text-xs text-gray-300 border border-teal-500/20">Rep: {f.reply}</div>}
                                         </div>
-                                    ) : <div className="p-3 bg-teal-500/10 rounded-xl text-xs text-gray-300">Rep: {f.reply}</div>}
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
+                                    </Reveal>
+                                ))}
+                            </div>
+                        </Card>
+                    </Reveal>
                 )}
             </div>
         </div>

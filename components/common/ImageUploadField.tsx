@@ -62,36 +62,36 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
 
     return (
         <div className={`space-y-2 ${className}`}>
-            <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">
+            <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1 transition-colors group-hover:text-gray-400">
                 {label}
             </label>
             
             <div className="relative group">
-                <div className={`relative w-full h-40 bg-gray-900/50 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden ${
-                    error ? 'border-rose-500/50' : 'border-gray-700 hover:border-teal-500/50'
+                <div className={`relative w-full h-40 bg-gray-900/50 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center overflow-hidden ${
+                    error ? 'border-rose-500/50' : 'border-gray-700 hover:border-teal-500/50 group-hover:bg-gray-800/60'
                 }`}>
                     {value ? (
                         <>
-                            <img src={value} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity" />
-                            <div className="relative z-10 flex flex-col items-center text-center px-4">
-                                <svg className="w-8 h-8 text-teal-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <img src={value} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-all duration-700 group-hover:scale-105" />
+                            <div className="relative z-10 flex flex-col items-center text-center px-4 transition-transform duration-300 group-hover:translate-y-[-4px]">
+                                <svg className="w-8 h-8 text-teal-400 mb-2 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0l-4-4m4 4v12" />
                                 </svg>
                                 <p className="text-[10px] font-black text-white uppercase tracking-widest">Change Image</p>
                             </div>
                         </>
                     ) : (
-                        <div className="flex flex-col items-center text-center px-4">
-                            <div className={`w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center mb-3 border border-gray-700 ${uploading ? 'animate-pulse' : ''}`}>
+                        <div className="flex flex-col items-center text-center px-4 transition-transform duration-300 group-hover:scale-[1.02]">
+                            <div className={`w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center mb-3 border border-gray-700 transition-all duration-300 group-hover:border-teal-500/30 ${uploading ? 'animate-pulse' : ''}`}>
                                 {uploading ? (
                                     <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                                 ) : (
-                                    <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-6 h-6 text-gray-500 group-hover:text-teal-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     </svg>
                                 )}
                             </div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-gray-300 transition-colors">
                                 {uploading ? 'Processing...' : 'Click to upload image file'}
                             </p>
                             <p className="text-[8px] text-gray-600 font-bold uppercase mt-1">MAX 1MB • {folder === 'events' ? 'JPG' : 'JPG/PNG'}</p>

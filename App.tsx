@@ -13,9 +13,9 @@ import ContactPage from './components/ContactPage';
 const AppContent: React.FC = () => {
     const { currentUser, loading, currentPage } = React.useContext(ClubDataContext);
 
-    // Synchronize scroll position on navigation
+    // Synchronize scroll position on navigation with smooth behavior
     React.useEffect(() => {
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [currentPage]);
 
     if (loading) {

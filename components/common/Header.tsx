@@ -49,9 +49,6 @@ const Header: React.FC = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             setCurrentPage('home');
-            setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 100);
         }
     };
 

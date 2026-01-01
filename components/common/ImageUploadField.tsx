@@ -7,10 +7,11 @@ interface ImageUploadFieldProps {
     onChange: (url: string) => void;
     folder: 'events' | 'profiles' | 'logos';
     className?: string;
+    placeholder?: string;
 }
 
 const ImageUploadField: React.FC<ImageUploadFieldProps> = ({ 
-    label, value, onChange, folder, className = "" 
+    label, value, onChange, folder, className = "", placeholder 
 }) => {
     const { uploadImage, dbStatus } = useClubData();
     const [uploading, setUploading] = useState(false);

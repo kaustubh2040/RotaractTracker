@@ -5,7 +5,7 @@ interface ImageUploadFieldProps {
     label: string;
     value: string;
     onChange: (url: string) => void;
-    folder: 'events' | 'profiles' | 'logos';
+    folder: 'events' | 'profiles' | 'logos' | 'flagship';
     className?: string;
     placeholder?: string;
 }
@@ -30,8 +30,8 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         }
 
         // Validation: Types
-        // PNG is only allowed for logos and profiles per requirements
-        const isPngAllowed = folder === 'logos' || folder === 'profiles';
+        // PNG is only allowed for logos, profiles and flagship per requirements
+        const isPngAllowed = folder === 'logos' || folder === 'profiles' || folder === 'flagship';
         const allowedTypes = isPngAllowed 
             ? ['image/jpeg', 'image/jpg', 'image/png'] 
             : ['image/jpeg', 'image/jpg'];

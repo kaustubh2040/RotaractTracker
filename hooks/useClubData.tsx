@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
-import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration } from '../types';
+import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration, FlagshipEvent, SubEvent } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES, BOD_POSITIONS } from '../constants';
 import { supabase, isSupabaseConfigured, uploadFile } from '../services/supabase';
@@ -18,8 +18,10 @@ interface ClubDataContextType {
     aboutContent: AboutContent;
     publicEvents: PublicEvent[];
     registrations: EventRegistration[];
-    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact';
-    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact') => void;
+    flagshipEvents: FlagshipEvent[];
+    subEvents: SubEvent[];
+    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship';
+    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship') => void;
     updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
     updateAboutContent: (content: AboutContent) => Promise<void>;
     addPublicEvent: (event: Omit<PublicEvent, 'id'>) => Promise<void>;
@@ -35,7 +37,13 @@ interface ClubDataContextType {
     addFeedback: (subject: string, message: string) => Promise<void>;
     replyToFeedback: (feedbackId: string, reply: string) => Promise<void>;
     registerVisitor: (reg: Omit<EventRegistration, 'id' | 'createdAt'>) => Promise<void>;
-    uploadImage: (file: File, folder: 'events' | 'profiles' | 'logos') => Promise<string | null>;
+    uploadImage: (file: File, folder: 'events' | 'profiles' | 'logos' | 'flagship') => Promise<string | null>;
+    addFlagshipEvent: (event: Omit<FlagshipEvent, 'id' | 'createdAt'>) => Promise<void>;
+    updateFlagshipEvent: (id: string, updates: Partial<FlagshipEvent>) => Promise<void>;
+    deleteFlagshipEvent: (id: string) => Promise<void>;
+    addSubEvent: (subEvent: Omit<SubEvent, 'id' | 'createdAt'>) => Promise<void>;
+    updateSubEvent: (id: string, updates: Partial<SubEvent>) => Promise<void>;
+    deleteSubEvent: (id: string) => Promise<void>;
     memberStats: MemberStats[];
     loading: boolean;
     dbStatus: 'connected' | 'local' | 'error';
@@ -62,15 +70,16 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
     const [publicEvents, setPublicEvents] = useState<PublicEvent[]>([]);
     const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
+    const [flagshipEvents, setFlagshipEvents] = useState<FlagshipEvent[]>([]);
+    const [subEvents, setSubEvents] = useState<SubEvent[]>([]);
     const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'ACTRA', appSubtitle: 'BY ROTARACT CLUB OF RSCOE', aboutGroupImageUrl: '' });
     const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentPage, _setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact'>('home');
+    const [currentPage, _setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship'>('home');
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
 
-    // Enhanced navigation with History API sync
-    const setCurrentPage = useCallback((page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact') => {
+    const setCurrentPage = useCallback((page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship') => {
         _setCurrentPage(page);
         if (window.history.state?.page !== page) {
             window.history.pushState({ page }, "", "");
@@ -78,17 +87,14 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     useEffect(() => {
-        // Initial history state establish
         if (!window.history.state) {
             window.history.replaceState({ page: 'home' }, "", "");
         }
-
         const handlePopState = (event: PopStateEvent) => {
             if (event.state && event.state.page) {
                 _setCurrentPage(event.state.page);
             }
         };
-
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
     }, []);
@@ -101,12 +107,7 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (isSupabaseConfigured && supabase) {
                 try {
                     const { data: userData } = await supabase.from('users').select('*');
-                    if (userData && userData.length > 0) {
-                        setUsers(userData.map(u => ({ ...u, id: u.id.toString(), positions: u.positions || [], photoUrl: u.photo_url || '' })));
-                    } else { 
-                        await supabase.from('users').upsert(USERS); 
-                        setUsers(USERS); 
-                    }
+                    if (userData) setUsers(userData.map(u => ({ ...u, id: u.id.toString(), positions: u.positions || [], photoUrl: u.photo_url || '' })));
 
                     const { data: activityData } = await supabase.from('activities').select('*');
                     if (activityData) setActivities(activityData.map((row: any) => ({
@@ -131,36 +132,34 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     const { data: eventData } = await supabase.from('public_events').select('*').order('date', { ascending: false });
                     if (eventData) setPublicEvents(eventData.map(e => ({
-                        id: e.id, 
-                        title: e.title, 
-                        description: e.description, 
-                        imageUrl: e.image_url, 
-                        date: e.date, 
-                        venue: e.venue, 
-                        category: e.category || 'General', 
-                        hostClub: e.host_club || 'Rotaract club of RSCOE', 
-                        registrationEnabled: e.registration_enabled, 
-                        isUpcoming: e.is_upcoming
+                        id: e.id, title: e.title, description: e.description, imageUrl: e.image_url, 
+                        date: e.date, venue: e.venue, category: e.category || 'General', 
+                        hostClub: e.host_club || 'Rotaract club of RSCOE', registrationEnabled: e.registration_enabled, isUpcoming: e.is_upcoming
                     })));
 
                     const { data: regData } = await supabase.from('event_registrations').select('*');
                     if (regData) setRegistrations(regData.map(r => ({
-                        id: r.id, 
-                        eventId: r.event_id, 
-                        eventTitle: r.event_title, 
-                        eventDate: r.event_date, 
-                        name: r.name, 
-                        email: r.email, 
-                        phone: r.phone, 
-                        createdAt: r.created_at
+                        id: r.id, eventId: r.event_id, eventTitle: r.event_title, eventDate: r.event_date, 
+                        name: r.name, email: r.email, phone: r.phone, createdAt: r.created_at
                     })));
 
-                    // Fetch Global Settings
+                    const { data: fsData } = await supabase.from('flagship_events').select('*');
+                    if (fsData) setFlagshipEvents(fsData.map(f => ({
+                        id: f.id, name: f.name, flyerUrl: f.flyer_url, description: f.description, 
+                        dateRange: f.date_range, isActive: f.is_active, createdAt: f.created_at
+                    })));
+
+                    const { data: subData } = await supabase.from('subevents').select('*');
+                    if (subData) setSubEvents(subData.map(s => ({
+                        id: s.id, flagshipEventId: s.flagship_event_id, name: s.name, flyerUrl: s.flyer_url,
+                        description: s.description, date: s.date, registrationFee: s.registration_fee,
+                        googleFormUrl: s.google_form_url, rulebookUrl: s.rulebook_url, createdAt: s.created_at
+                    })));
+
                     const { data: settingsData } = await supabase.from('settings').select('*');
                     if (settingsData) {
                         const sMap: Record<string, any> = {};
                         settingsData.forEach(row => sMap[row.key] = row.value);
-                        
                         setSettings(prev => ({
                             ...prev,
                             appName: sMap.app_name || prev.appName,
@@ -168,33 +167,18 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                             clubLogoUrl: sMap.club_logo_url || prev.clubLogoUrl,
                             aboutGroupImageUrl: sMap.about_group_image_url || prev.aboutGroupImageUrl
                         }));
-
-                        if (sMap.about_content) {
-                            try {
-                                setAboutContent(JSON.parse(sMap.about_content));
-                            } catch (e) {
-                                console.error("Error parsing about_content JSON", e);
-                            }
-                        }
+                        if (sMap.about_content) try { setAboutContent(JSON.parse(sMap.about_content)); } catch (e) {}
                     }
 
                     setDbStatus('connected');
                     if (savedSession) {
                         const parsed = JSON.parse(savedSession);
-                        const user = (userData || users).find((u: any) => u.id.toString() === parsed.id.toString());
-                        if (user) { 
-                            setCurrentUser({ ...user, id: user.id.toString(), positions: user.positions || [], photoUrl: user.photo_url || '' }); 
-                            setCurrentPage('dashboard'); 
-                        }
+                        const user = (userData || []).find((u: any) => u.id.toString() === parsed.id.toString());
+                        if (user) setCurrentUser({ ...user, id: user.id.toString(), positions: user.positions || [], photoUrl: user.photo_url || '' });
                     }
                 } catch (e) {
-                    console.error("Supabase init error:", e);
                     setDbStatus('error');
                 }
-            } else {
-                setDbStatus('local');
-                setUsers(USERS);
-                setActivities(INITIAL_ACTIVITIES);
             }
             setLoading(false);
         };
@@ -227,77 +211,77 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 else if (key === 'appName') dbKey = 'app_name';
                 else if (key === 'appSubtitle') dbKey = 'app_subtitle';
                 else if (key === 'aboutGroupImageUrl') dbKey = 'about_group_image_url';
-
-                if (dbKey) {
-                    await supabase.from('settings').upsert({ key: dbKey, value });
-                }
+                if (dbKey) await supabase.from('settings').upsert({ key: dbKey, value });
             }
         }
     };
 
     const updateAboutContent = async (content: AboutContent) => {
         setAboutContent(content);
+        if (dbStatus === 'connected' && supabase) await supabase.from('settings').upsert({ key: 'about_content', value: JSON.stringify(content) });
+    };
+
+    const uploadImage = async (file: File, folder: 'events' | 'profiles' | 'logos' | 'flagship'): Promise<string | null> => {
+        return await uploadFile(file, folder);
+    };
+
+    const addFlagshipEvent = async (event: Omit<FlagshipEvent, 'id' | 'createdAt'>) => {
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('settings').upsert({ key: 'about_content', value: JSON.stringify(content) });
+            const { data } = await supabase.from('flagship_events').insert([{
+                name: event.name, flyer_url: event.flyerUrl, description: event.description,
+                date_range: event.dateRange, is_active: event.isActive
+            }]).select();
+            if (data) setFlagshipEvents(prev => [...prev, { ...event, id: data[0].id, createdAt: data[0].created_at }]);
         }
     };
 
-    const registerVisitor = async (reg: Omit<EventRegistration, 'id' | 'createdAt'>) => {
-        const newReg = { ...reg, id: `reg${Date.now()}`, createdAt: new Date().toISOString() };
+    const updateFlagshipEvent = async (id: string, updates: Partial<FlagshipEvent>) => {
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('event_registrations').insert([{
-                id: newReg.id, event_id: newReg.eventId, event_title: newReg.eventTitle, event_date: newReg.eventDate, name: newReg.name, email: newReg.email, phone: newReg.phone, created_at: newReg.createdAt
-            }]);
+            const dbUpdates: any = {};
+            if (updates.name !== undefined) dbUpdates.name = updates.name;
+            if (updates.flyerUrl !== undefined) dbUpdates.flyer_url = updates.flyerUrl;
+            if (updates.description !== undefined) dbUpdates.description = updates.description;
+            if (updates.dateRange !== undefined) dbUpdates.date_range = updates.dateRange;
+            if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+            await supabase.from('flagship_events').update(dbUpdates).eq('id', id);
         }
-        setRegistrations(prev => [...prev, newReg]);
+        setFlagshipEvents(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
     };
 
-    const uploadImage = async (file: File, folder: 'events' | 'profiles' | 'logos'): Promise<string | null> => {
-        try {
-            return await uploadFile(file, folder);
-        } catch (e) {
-            console.error('Image upload failed:', e);
-            throw e;
+    const deleteFlagshipEvent = async (id: string) => {
+        if (dbStatus === 'connected' && supabase) await supabase.from('flagship_events').delete().eq('id', id);
+        setFlagshipEvents(prev => prev.filter(f => f.id !== id));
+    };
+
+    const addSubEvent = async (subEvent: Omit<SubEvent, 'id' | 'createdAt'>) => {
+        if (dbStatus === 'connected' && supabase) {
+            const { data } = await supabase.from('subevents').insert([{
+                flagship_event_id: subEvent.flagshipEventId, name: subEvent.name, flyer_url: subEvent.flyerUrl,
+                description: subEvent.description, date: subEvent.date, registration_fee: subEvent.registrationFee,
+                google_form_url: subEvent.googleFormUrl, rulebook_url: subEvent.rulebookUrl
+            }]).select();
+            if (data) setSubEvents(prev => [...prev, { ...subEvent, id: data[0].id, createdAt: data[0].created_at }]);
         }
     };
 
-    const updatePublicEvent = async (id: string, updates: Partial<PublicEvent>) => {
+    const updateSubEvent = async (id: string, updates: Partial<SubEvent>) => {
         if (dbStatus === 'connected' && supabase) {
-            const dbUpdates: any = {
-                title: updates.title,
-                description: updates.description,
-                image_url: updates.imageUrl,
-                date: updates.date,
-                venue: updates.venue,
-                category: updates.category,
-                host_club: updates.hostClub,
-                registration_enabled: updates.registrationEnabled,
-                is_upcoming: updates.isUpcoming
-            };
-            Object.keys(dbUpdates).forEach(key => dbUpdates[key] === undefined && delete dbUpdates[key]);
-            await supabase.from('public_events').update(dbUpdates).eq('id', id);
+            const dbUpdates: any = {};
+            if (updates.name !== undefined) dbUpdates.name = updates.name;
+            if (updates.flyerUrl !== undefined) dbUpdates.flyer_url = updates.flyerUrl;
+            if (updates.description !== undefined) dbUpdates.description = updates.description;
+            if (updates.date !== undefined) dbUpdates.date = updates.date;
+            if (updates.registrationFee !== undefined) dbUpdates.registration_fee = updates.registrationFee;
+            if (updates.googleFormUrl !== undefined) dbUpdates.google_form_url = updates.googleFormUrl;
+            if (updates.rulebookUrl !== undefined) dbUpdates.rulebook_url = updates.rulebookUrl;
+            await supabase.from('subevents').update(dbUpdates).eq('id', id);
         }
-        setPublicEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+        setSubEvents(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
     };
 
-    const updateMember = async (userId: string, updates: Partial<User>) => {
-        const isAdmin = currentUser?.role === 'admin';
-        const isSelf = currentUser?.id === userId;
-        
-        if (!isAdmin && !isSelf) return;
-
-        const dbUpdates: any = {};
-        if (updates.name && isAdmin) dbUpdates.name = updates.name;
-        if (updates.password) dbUpdates.password = updates.password;
-        if (updates.positions && isAdmin) dbUpdates.positions = updates.positions;
-        if (updates.photoUrl !== undefined) dbUpdates.photo_url = updates.photoUrl;
-
-        if (dbStatus === 'connected' && supabase) {
-            await supabase.from('users').update(dbUpdates).eq('id', userId);
-        }
-
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
-        if (isSelf) setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
+    const deleteSubEvent = async (id: string) => {
+        if (dbStatus === 'connected' && supabase) await supabase.from('subevents').delete().eq('id', id);
+        setSubEvents(prev => prev.filter(s => s.id !== id));
     };
 
     const addPublicEvent = async (event: Omit<PublicEvent, 'id'>) => {
@@ -312,10 +296,21 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const deletePublicEvent = async (id: string) => {
-        if (dbStatus === 'connected' && supabase) {
-            await supabase.from('public_events').delete().eq('id', id);
-        }
+        if (dbStatus === 'connected' && supabase) await supabase.from('public_events').delete().eq('id', id);
         setPublicEvents(prev => prev.filter(e => e.id !== id));
+    };
+
+    const updatePublicEvent = async (id: string, updates: Partial<PublicEvent>) => {
+        if (dbStatus === 'connected' && supabase) {
+            const dbUpdates: any = {
+                title: updates.title, description: updates.description, image_url: updates.imageUrl,
+                date: updates.date, venue: updates.venue, category: updates.category,
+                host_club: updates.hostClub, registration_enabled: updates.registrationEnabled, is_upcoming: updates.isUpcoming
+            };
+            Object.keys(dbUpdates).forEach(key => dbUpdates[key] === undefined && delete dbUpdates[key]);
+            await supabase.from('public_events').update(dbUpdates).eq('id', id);
+        }
+        setPublicEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     };
 
     const addActivity = async (activity: Omit<Activity, 'id' | 'status' | 'userName' | 'submittedAt'>) => {
@@ -342,61 +337,59 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setActivities(prev => prev.map(a => a.id === activityId ? { ...a, status } : a));
     };
 
+    const updateMember = async (userId: string, updates: Partial<User>) => {
+        if (dbStatus === 'connected' && supabase) {
+            const dbUpdates: any = {};
+            if (updates.name) dbUpdates.name = updates.name;
+            if (updates.password) dbUpdates.password = updates.password;
+            if (updates.positions) dbUpdates.positions = updates.positions;
+            if (updates.photoUrl !== undefined) dbUpdates.photo_url = updates.photoUrl;
+            await supabase.from('users').update(dbUpdates).eq('id', userId);
+        }
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+    };
+
     const addMember = async (name: string, password: string) => {
         const newUser: User = { id: `user${Date.now()}`, name, role: 'member', password, positions: [], photoUrl: '' };
         if (dbStatus === 'connected' && supabase) {
-            await supabase.from('users').insert([{ 
-                id: newUser.id, name: newUser.name, role: newUser.role, password: newUser.password, positions: newUser.positions, photo_url: newUser.photoUrl 
-            }]);
+            await supabase.from('users').insert([{ id: newUser.id, name: newUser.name, role: newUser.role, password: newUser.password, positions: newUser.positions, photo_url: newUser.photoUrl }]);
         }
         setUsers(prev => [...prev, newUser]);
     };
 
     const deleteMember = async (userId: string) => {
-        if (dbStatus === 'connected' && supabase) {
-            // Permanent deletion from database
-            await supabase.from('users').delete().eq('id', userId);
-        }
-        
-        // Update local state permanently
+        if (dbStatus === 'connected' && supabase) await supabase.from('users').delete().eq('id', userId);
         setUsers(prev => prev.filter(u => u.id !== userId));
-        
-        // Remove all related records from local state to maintain consistency
-        setActivities(prev => prev.filter(a => a.userId !== userId));
-        setNotifications(prev => prev.filter(n => n.userId !== userId));
-        setFeedbacks(prev => prev.filter(f => f.userId !== userId));
     };
 
     const addAnnouncement = async (text: string) => {
         const newAnn: Announcement = { id: `ann${Date.now()}`, text, author: currentUser?.name || 'Admin', createdAt: new Date().toISOString() };
-        if (dbStatus === 'connected' && supabase) {
-            await supabase.from('announcements').insert([{ id: newAnn.id, text: newAnn.text, author: newAnn.author, created_at: newAnn.createdAt }]);
-        }
+        if (dbStatus === 'connected' && supabase) await supabase.from('announcements').insert([{ id: newAnn.id, text: newAnn.text, author: newAnn.author, created_at: newAnn.createdAt }]);
         setAnnouncements(prev => [newAnn, ...prev]);
     };
 
     const sendNotification = async (userId: string, text: string) => {
         const newNot: Notification = { id: `not${Date.now()}`, userId, text, createdAt: new Date().toISOString(), read: false };
-        if (dbStatus === 'connected' && supabase) {
-            await supabase.from('notifications').insert([{ id: newNot.id, user_id: newNot.userId, text: newNot.text, created_at: newNot.createdAt, read: false }]);
-        }
+        if (dbStatus === 'connected' && supabase) await supabase.from('notifications').insert([{ id: newNot.id, user_id: newNot.userId, text: newNot.text, created_at: newNot.createdAt, read: false }]);
         setNotifications(prev => [newNot, ...prev]);
     };
 
     const addFeedback = async (subject: string, message: string) => {
         if (!currentUser) return;
         const newFb: Feedback = { id: `fb${Date.now()}`, userId: currentUser.id, userName: currentUser.name, subject, message, createdAt: new Date().toISOString() };
-        if (dbStatus === 'connected' && supabase) {
-            await supabase.from('feedbacks').insert([{ id: newFb.id, user_id: newFb.userId, user_name: newFb.userName, subject: newFb.subject, message: newFb.message, created_at: newFb.createdAt }]);
-        }
+        if (dbStatus === 'connected' && supabase) await supabase.from('feedbacks').insert([{ id: newFb.id, user_id: newFb.userId, user_name: newFb.userName, subject: newFb.subject, message: newFb.message, created_at: newFb.createdAt }]);
         setFeedbacks(prev => [newFb, ...prev]);
     };
 
     const replyToFeedback = async (feedbackId: string, reply: string) => {
-        if (dbStatus === 'connected' && supabase) {
-            await supabase.from('feedbacks').update({ reply }).eq('id', feedbackId);
-        }
+        if (dbStatus === 'connected' && supabase) await supabase.from('feedbacks').update({ reply }).eq('id', feedbackId);
         setFeedbacks(prev => prev.map(f => f.id === feedbackId ? { ...f, reply } : f));
+    };
+
+    const registerVisitor = async (reg: Omit<EventRegistration, 'id' | 'createdAt'>) => {
+        const newReg = { ...reg, id: `reg${Date.now()}`, createdAt: new Date().toISOString() };
+        if (dbStatus === 'connected' && supabase) await supabase.from('event_registrations').insert([{ id: newReg.id, event_id: newReg.eventId, event_title: newReg.eventTitle, event_date: newReg.eventDate, name: newReg.name, email: newReg.email, phone: newReg.phone, created_at: newReg.createdAt }]);
+        setRegistrations(prev => [...prev, newReg]);
     };
 
     const memberStats = useMemo<MemberStats[]>(() => {
@@ -411,10 +404,12 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (
         <ClubDataContext.Provider value={{
             currentUser, login, logout, users, members: users.filter(u => u.role === 'member'), activities, 
-            announcements, notifications, feedbacks, settings, aboutContent, publicEvents, registrations, currentPage, setCurrentPage,
+            announcements, notifications, feedbacks, settings, aboutContent, publicEvents, registrations, flagshipEvents, subEvents, currentPage, setCurrentPage,
             updateSettings, updateAboutContent, addPublicEvent, updatePublicEvent, deletePublicEvent,
             addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
-            addAnnouncement, sendNotification, addFeedback, replyToFeedback, registerVisitor, uploadImage, memberStats, loading, dbStatus
+            addAnnouncement, sendNotification, addFeedback, replyToFeedback, registerVisitor, uploadImage,
+            addFlagshipEvent, updateFlagshipEvent, deleteFlagshipEvent, addSubEvent, updateSubEvent, deleteSubEvent,
+            memberStats, loading, dbStatus
         }}>
             {children}
         </ClubDataContext.Provider>

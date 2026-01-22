@@ -9,6 +9,7 @@ import AboutPage from './components/AboutPage';
 import LeaderboardPage from './components/LeaderboardPage';
 import BODPage from './components/BODPage';
 import ContactPage from './components/ContactPage';
+import FlagshipEventPage from './components/FlagshipEventPage';
 
 const AppContent: React.FC = () => {
     const { currentUser, loading, currentPage } = React.useContext(ClubDataContext);
@@ -37,6 +38,8 @@ const AppContent: React.FC = () => {
                 return <ContactPage />;
             case 'bod-all':
                 return <BODPage />;
+            case 'flagship':
+                return <FlagshipEventPage />;
             case 'leaderboard':
                 if (!currentUser) return <LoginScreen />;
                 return <LeaderboardPage />;
@@ -52,7 +55,7 @@ const AppContent: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-900">
             <Header />
-            <main className={currentPage !== 'home' && currentPage !== 'about' && currentPage !== 'leaderboard' && currentPage !== 'bod-all' && currentPage !== 'contact' ? 'p-4 sm:p-6 lg:p-12' : ''}>
+            <main className={currentPage !== 'home' && currentPage !== 'about' && currentPage !== 'leaderboard' && currentPage !== 'bod-all' && currentPage !== 'contact' && currentPage !== 'flagship' ? 'p-4 sm:p-6 lg:p-12' : ''}>
                 {renderPage()}
             </main>
         </div>

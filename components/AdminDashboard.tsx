@@ -4,7 +4,7 @@ import Leaderboard from './Leaderboard';
 import { useClubData } from '../hooks/useClubData';
 import Card from './common/Card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { ActivityType, PublicEvent } from '../types';
+import { ActivityType, PublicEvent, FlagshipEvent, SubEvent } from '../types';
 import MemberManagement from './MemberManagement';
 import ImageUploadField from './common/ImageUploadField';
 import Reveal from './common/Reveal';
@@ -14,20 +14,40 @@ const AdminDashboard: React.FC = () => {
     const { 
         currentUser, memberStats, activities, addAnnouncement, sendNotification, members, dbStatus, 
         publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations,
-        settings, updateSettings, aboutContent, updateAboutContent, updateMember, loading
+        settings, updateSettings, aboutContent, updateAboutContent, updateMember, loading,
+        flagshipEvents, addFlagshipEvent, updateFlagshipEvent, deleteFlagshipEvent,
+        subEvents, addSubEvent, updateSubEvent, deleteSubEvent
     } = useClubData();
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings' | 'profile'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings' | 'profile' | 'flagship'>('overview');
     const [msg, setMsg] = useState('');
     const [targetUser, setTargetUser] = useState('');
     const [targetMsg, setTargetMsg] = useState('');
     const [replyText, setReplyText] = useState<Record<string, string>>({});
     
+    // Flagship Form State
+    const [editingFlagshipId, setEditingFlagshipId] = useState<string | null>(null);
+    const [fsName, setFsName] = useState('');
+    const [fsFlyer, setFsFlyer] = useState('');
+    const [fsDesc, setFsDesc] = useState('');
+    const [fsDateRange, setFsDateRange] = useState('');
+    const [fsIsActive, setFsIsActive] = useState(false);
+
+    // Subevent Form State
+    const [editingSubId, setEditingSubId] = useState<string | null>(null);
+    const [selectedFsForSub, setSelectedFsForSub] = useState('');
+    const [subName, setSubName] = useState('');
+    const [subFlyer, setSubFlyer] = useState('');
+    const [subDesc, setSubDesc] = useState('');
+    const [subDate, setSubDate] = useState('');
+    const [subFee, setSubFee] = useState('');
+    const [subForm, setSubForm] = useState('');
+    const [subRules, setSubRules] = useState('');
+
     // Settings States
     const [tempSettings, setTempSettings] = useState(settings);
     const [tempAbout, setTempAbout] = useState(aboutContent);
 
-    // Synchronize local edit state with context when context finishes loading
     useEffect(() => {
         setTempSettings(settings);
     }, [settings]);
@@ -57,13 +77,54 @@ const AdminDashboard: React.FC = () => {
     const [evtRegEnabled, setEvtRegEnabled] = useState(true);
     const [evtUpcoming, setEvtUpcoming] = useState(false);
 
-    // Auto-filter registrations (5 days after event)
     const activeRegistrations = registrations.filter(reg => {
         const eventDate = new Date(reg.eventDate);
         const now = new Date();
         const diffDays = (now.getTime() - eventDate.getTime()) / (1000 * 3600 * 24);
         return diffDays <= 5;
     });
+
+    const handleEditFlagship = (fs: FlagshipEvent) => {
+        setEditingFlagshipId(fs.id);
+        setFsName(fs.name);
+        setFsFlyer(fs.flyerUrl);
+        setFsDesc(fs.description);
+        setFsDateRange(fs.dateRange);
+        setFsIsActive(fs.isActive);
+    };
+
+    const handleSaveFlagship = async () => {
+        if (!fsName) return alert('Name is required');
+        const data = { name: fsName, flyerUrl: fsFlyer, description: fsDesc, dateRange: fsDateRange, isActive: fsIsActive };
+        if (editingFlagshipId) await updateFlagshipEvent(editingFlagshipId, data);
+        else await addFlagshipEvent(data);
+        setEditingFlagshipId(null); setFsName(''); setFsFlyer(''); setFsDesc(''); setFsDateRange(''); setFsIsActive(false);
+        alert('Flagship Event Saved!');
+    };
+
+    const handleEditSub = (sub: SubEvent) => {
+        setEditingSubId(sub.id);
+        setSelectedFsForSub(sub.flagshipEventId);
+        setSubName(sub.name);
+        setSubFlyer(sub.flyerUrl);
+        setSubDesc(sub.description);
+        setSubDate(sub.date);
+        setSubFee(sub.registrationFee);
+        setSubForm(sub.googleFormUrl);
+        setSubRules(sub.rulebookUrl);
+    };
+
+    const handleSaveSub = async () => {
+        if (!subName || !selectedFsForSub) return alert('Name and Flagship choice required');
+        const data = { 
+            flagshipEventId: selectedFsForSub, name: subName, flyerUrl: subFlyer, description: subDesc, 
+            date: subDate, registrationFee: subFee, googleFormUrl: subForm, rulebookUrl: subRules 
+        };
+        if (editingSubId) await updateSubEvent(editingSubId, data);
+        else await addSubEvent(data);
+        setEditingSubId(null); setSubName(''); setSubFlyer(''); setSubDesc(''); setSubDate(''); setSubFee(''); setSubForm(''); setSubRules('');
+        alert('Subevent Saved!');
+    };
 
     const handleEditEvent = (evt: PublicEvent) => {
         setEditingEventId(evt.id);
@@ -81,26 +142,9 @@ const AdminDashboard: React.FC = () => {
 
     const handleSaveEvent = async () => {
         if (!evtTitle || !evtDate) return alert('Provide title and date.');
-        
-        const eventData = {
-            title: evtTitle,
-            description: evtDesc,
-            imageUrl: evtImg,
-            date: evtDate,
-            venue: evtVenue,
-            category: evtCategory,
-            hostClub: evtHostClub,
-            registrationEnabled: evtRegEnabled,
-            isUpcoming: evtUpcoming
-        };
-
-        if (editingEventId) {
-            await updatePublicEvent(editingEventId, eventData);
-            setEditingEventId(null);
-        } else {
-            await addPublicEvent(eventData);
-        }
-
+        const eventData = { title: evtTitle, description: evtDesc, imageUrl: evtImg, date: evtDate, venue: evtVenue, category: evtCategory, hostClub: evtHostClub, registrationEnabled: evtRegEnabled, isUpcoming: evtUpcoming };
+        if (editingEventId) await updatePublicEvent(editingEventId, eventData);
+        else await addPublicEvent(eventData);
         setEvtTitle(''); setEvtDesc(''); setEvtImg(''); setEvtDate(''); setEvtVenue(''); setEvtCategory('General'); setEvtHostClub('Rotaract club of RSCOE');
         alert('Event saved successfully!');
     };
@@ -123,31 +167,14 @@ const AdminDashboard: React.FC = () => {
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentUser) return;
-        
         const updates: any = { photoUrl: newPhoto };
-        
         if (isUpdatingPassword) {
-            if (!isVerified) {
-                setPassError('Please verify your current password first.');
-                return;
-            }
-            if (!newPass || newPass !== confirmPass) {
-                setPassError('New passwords do not match or are empty.');
-                return;
-            }
+            if (!isVerified) { setPassError('Please verify your current password first.'); return; }
+            if (!newPass || newPass !== confirmPass) { setPassError('New passwords do not match or are empty.'); return; }
             updates.password = newPass;
         }
-
         await updateMember(currentUser.id, updates);
-        
-        // Reset pass flow
-        setIsUpdatingPassword(false);
-        setIsVerified(false);
-        setCurrentPass('');
-        setNewPass('');
-        setConfirmPass('');
-        setPassError('');
-        
+        setIsUpdatingPassword(false); setIsVerified(false); setCurrentPass(''); setNewPass(''); setConfirmPass(''); setPassError('');
         alert('Profile details updated successfully!');
     };
 
@@ -159,6 +186,7 @@ const AdminDashboard: React.FC = () => {
     const navItems = [
         { id: 'overview', label: 'Overview', icon: <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
         { id: 'approvals', label: 'Review Logs', icon: <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+        { id: 'flagship', label: 'Flagship System', icon: <path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-7l.88 2.32L15.32 17l-2.44.88L12 20.32l-.88-2.44L8.68 17l2.44-.88L12 13.76z" /> },
         { id: 'events', label: 'Manage Events', icon: <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /> },
         { id: 'registrations', label: 'Attendees', icon: <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
         { id: 'members', label: 'User Hub', icon: <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 11a4 4 0 110-5.292M12 4.354a4 4 0 000 5.292" /> },
@@ -225,6 +253,82 @@ const AdminDashboard: React.FC = () => {
                     </div>
                 )}
 
+                {activeTab === 'flagship' && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <Reveal instant={true}>
+                            <Card title={editingFlagshipId ? "Edit Flagship Event" : "Create New Flagship Event"}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <input value={fsName} onChange={e => setFsName(e.target.value)} placeholder="Event Name (e.g. Avahan 6.0)" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                        <input value={fsDateRange} onChange={e => setFsDateRange(e.target.value)} placeholder="Date Range (e.g. 15-20 Oct)" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
+                                        <div className="flex items-center space-x-3 bg-gray-700 p-3 rounded-xl border border-gray-600">
+                                            <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Publicly Active</span>
+                                            <input type="checkbox" checked={fsIsActive} onChange={e => setFsIsActive(e.target.checked)} className="h-5 w-5 accent-teal-500" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <ImageUploadField label="Main Event Flyer" value={fsFlyer} onChange={setFsFlyer} folder="flagship" />
+                                    </div>
+                                    <textarea value={fsDesc} onChange={e => setFsDesc(e.target.value)} placeholder="Main Description" className="md:col-span-2 p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24" />
+                                </div>
+                                <div className="mt-6 flex space-x-3">
+                                    <button onClick={handleSaveFlagship} className="flex-1 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold transition-all active:scale-95">Save Flagship</button>
+                                    {editingFlagshipId && <button onClick={() => setEditingFlagshipId(null)} className="px-6 py-3 bg-gray-700 rounded-xl font-bold">Cancel</button>}
+                                </div>
+                            </Card>
+                        </Reveal>
+
+                        <Reveal delay={200}>
+                            <Card title="Manage Sub-Events">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <select value={selectedFsForSub} onChange={e => setSelectedFsForSub(e.target.value)} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600">
+                                            <option value="">Linked Flagship...</option>
+                                            {flagshipEvents.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                        </select>
+                                        <input value={subName} onChange={e => setSubName(e.target.value)} placeholder="Subevent Name" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600" />
+                                        <input value={subDate} onChange={e => setSubDate(e.target.value)} placeholder="Date" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600" />
+                                        <input value={subFee} onChange={e => setSubFee(e.target.value)} placeholder="Entry Fee (₹)" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600" />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <input value={subForm} onChange={e => setSubForm(e.target.value)} placeholder="Google Form Link" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600" />
+                                        <input value={subRules} onChange={e => setSubRules(e.target.value)} placeholder="Rulebook Drive Link" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600" />
+                                        <ImageUploadField label="Subevent Flyer" value={subFlyer} onChange={setSubFlyer} folder="flagship" />
+                                    </div>
+                                    <textarea value={subDesc} onChange={e => setSubDesc(e.target.value)} placeholder="Description" className="md:col-span-2 p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24" />
+                                </div>
+                                <button onClick={handleSaveSub} className="w-full mt-6 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold transition-all">Add / Update Subevent</button>
+                            </Card>
+                        </Reveal>
+
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-black uppercase text-gray-500 ml-4">Existing Hierarchy</h3>
+                            {flagshipEvents.map(fs => (
+                                <Card key={fs.id} title={fs.name}>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <p className="text-sm text-gray-400">{fs.description}</p>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => handleEditFlagship(fs)} className="text-teal-400">Edit</button>
+                                            <button onClick={() => deleteFlagshipEvent(fs.id)} className="text-rose-500">Delete</button>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {subEvents.filter(s => s.flagshipEventId === fs.id).map(sub => (
+                                            <div key={sub.id} className="p-4 bg-gray-900 border border-gray-700 rounded-2xl">
+                                                <h4 className="font-bold text-white">{sub.name}</h4>
+                                                <div className="mt-4 flex space-x-3">
+                                                    <button onClick={() => handleEditSub(sub)} className="text-xs text-teal-500">Edit</button>
+                                                    <button onClick={() => deleteSubEvent(sub.id)} className="text-xs text-rose-500">Delete</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === 'profile' && currentUser && (
                     <Reveal instant={true}>
                         <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
@@ -243,14 +347,7 @@ const AdminDashboard: React.FC = () => {
                                 </div>
 
                                 <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                    <ImageUploadField 
-                                        label="Profile Photo"
-                                        value={newPhoto}
-                                        onChange={setNewPhoto}
-                                        folder="profiles"
-                                        placeholder="https://raw.githubusercontent.com/..."
-                                    />
-                                    
+                                    <ImageUploadField label="Profile Photo" value={newPhoto} onChange={setNewPhoto} folder="profiles" />
                                     <div className="mt-4 p-5 bg-teal-500/5 rounded-2xl border border-teal-500/10 text-left">
                                         <h5 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3 flex items-center">
                                             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -261,59 +358,30 @@ const AdminDashboard: React.FC = () => {
 
                                     <div className="border-t border-gray-700 pt-6">
                                         {!isUpdatingPassword ? (
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setIsUpdatingPassword(true)}
-                                                className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors active:scale-95"
-                                            >
-                                                + Update Access Pin
-                                            </button>
+                                            <button type="button" onClick={() => setIsUpdatingPassword(true)} className="text-teal-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors active:scale-95"> + Update Access Pin </button>
                                         ) : (
                                             <div className="space-y-4 animate-fadeIn">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update Security Pin</h5>
                                                     <button type="button" onClick={() => setIsUpdatingPassword(false)} className="text-[10px] text-rose-500 font-bold uppercase">Cancel</button>
                                                 </div>
-                                                
                                                 {!isVerified ? (
                                                     <div className="space-y-2">
                                                         <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Current Password</label>
                                                         <div className="flex gap-2">
-                                                            <input 
-                                                                type="password" 
-                                                                value={currentPass}
-                                                                onChange={e => setCurrentPass(e.target.value)}
-                                                                placeholder="Current PIN" 
-                                                                className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                            />
-                                                            <button 
-                                                                type="button" 
-                                                                onClick={handleVerifyCurrentPassword}
-                                                                className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl active:scale-95 transition-all"
-                                                            >
-                                                                Verify
-                                                            </button>
+                                                            <input type="password" value={currentPass} onChange={e => setCurrentPass(e.target.value)} placeholder="Current PIN" className="flex-1 p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm" />
+                                                            <button type="button" onClick={handleVerifyCurrentPassword} className="px-6 bg-gray-600 text-white font-black uppercase text-[10px] rounded-xl active:scale-95 transition-all">Verify</button>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                         <div>
                                                             <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">New Password</label>
-                                                            <input 
-                                                                type="password" 
-                                                                value={newPass}
-                                                                onChange={e => setNewPass(e.target.value)}
-                                                                className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                            />
+                                                            <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm" />
                                                         </div>
                                                         <div>
                                                             <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest ml-1">Confirm Password</label>
-                                                            <input 
-                                                                type="password" 
-                                                                value={confirmPass}
-                                                                onChange={e => setConfirmPass(e.target.value)}
-                                                                className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm"
-                                                            />
+                                                            <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className="w-full p-4 bg-gray-700 rounded-xl border border-gray-600 text-white outline-none focus:border-teal-500 transition-all text-sm" />
                                                         </div>
                                                     </div>
                                                 )}
@@ -321,7 +389,6 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-
                                     <button type="submit" className="w-full py-5 bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-500 transition-all active:scale-[0.98]">Update Profile Access</button>
                                 </form>
                             </Card>
@@ -336,84 +403,30 @@ const AdminDashboard: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Application Name</label>
-                                        <input 
-                                            value={tempSettings.appName} 
-                                            onChange={e => setTempSettings({...tempSettings, appName: e.target.value})} 
-                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
-                                        />
+                                        <input value={tempSettings.appName} onChange={e => setTempSettings({...tempSettings, appName: e.target.value})} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">App Subtitle</label>
-                                        <input 
-                                            value={tempSettings.appSubtitle} 
-                                            onChange={e => setTempSettings({...tempSettings, appSubtitle: e.target.value})} 
-                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" 
-                                        />
+                                        <input value={tempSettings.appSubtitle} onChange={e => setTempSettings({...tempSettings, appSubtitle: e.target.value})} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
                                     </div>
-                                    <div className="md:col-span-2">
-                                        <ImageUploadField 
-                                            label="Club Logo"
-                                            value={tempSettings.clubLogoUrl}
-                                            onChange={url => setTempSettings({...tempSettings, clubLogoUrl: url})}
-                                            folder="logos"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <ImageUploadField 
-                                            label="About Section – Group Image"
-                                            value={tempSettings.aboutGroupImageUrl || ''}
-                                            onChange={url => setTempSettings({...tempSettings, aboutGroupImageUrl: url})}
-                                            folder="events"
-                                        />
-                                    </div>
+                                    <div className="md:col-span-2"> <ImageUploadField label="Club Logo" value={tempSettings.clubLogoUrl} onChange={url => setTempSettings({...tempSettings, clubLogoUrl: url})} folder="logos" /> </div>
+                                    <div className="md:col-span-2"> <ImageUploadField label="About Section – Group Image" value={tempSettings.aboutGroupImageUrl || ''} onChange={url => setTempSettings({...tempSettings, aboutGroupImageUrl: url})} folder="events" /> </div>
                                 </div>
                             </Card>
-
                             <Card title="About Content">
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Introduction</label>
-                                        <textarea 
-                                            value={tempAbout.intro} 
-                                            onChange={e => setTempAbout({...tempAbout, intro: e.target.value})} 
-                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
-                                        />
+                                        <textarea value={tempAbout.intro} onChange={e => setTempAbout({...tempAbout, intro: e.target.value})} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" />
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Vision</label>
-                                            <textarea 
-                                                value={tempAbout.vision} 
-                                                onChange={e => setTempAbout({...tempAbout, vision: e.target.value})} 
-                                                className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Mission</label>
-                                            <textarea 
-                                                value={tempAbout.mission} 
-                                                onChange={e => setTempAbout({...tempAbout, mission: e.target.value})} 
-                                                className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
-                                            />
-                                        </div>
+                                        <div> <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Vision</label> <textarea value={tempAbout.vision} onChange={e => setTempAbout({...tempAbout, vision: e.target.value})} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" /> </div>
+                                        <div> <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Mission</label> <textarea value={tempAbout.mission} onChange={e => setTempAbout({...tempAbout, mission: e.target.value})} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" /> </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Core Values</label>
-                                        <textarea 
-                                            value={tempAbout.values} 
-                                            onChange={e => setTempAbout({...tempAbout, values: e.target.value})} 
-                                            className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" 
-                                        />
-                                    </div>
+                                    <div> <label className="block text-[10px] font-black uppercase text-gray-500 mb-2 tracking-widest">Core Values</label> <textarea value={tempAbout.values} onChange={e => setTempAbout({...tempAbout, values: e.target.value})} className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-24 outline-none" /> </div>
                                 </div>
                             </Card>
-
-                            <button 
-                                onClick={handleUpdateSettings} 
-                                className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-[0.98]"
-                            >
-                                Save All Preferences
-                            </button>
+                            <button onClick={handleUpdateSettings} className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-[0.98]"> Save All Preferences </button>
                         </div>
                     </Reveal>
                 )}
@@ -432,26 +445,11 @@ const AdminDashboard: React.FC = () => {
                                         <input value={evtCategory} onChange={e => setEvtCategory(e.target.value)} placeholder="Category" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
                                         <input value={evtHostClub} onChange={e => setEvtHostClub(e.target.value)} placeholder="Host Club" className="w-full p-3 bg-gray-700 rounded-xl text-white border border-gray-600 outline-none" />
                                         <div className="grid grid-cols-2 gap-3">
-                                            <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                                <span className="text-[10px] font-black uppercase text-gray-500">Reg Portal</span>
-                                                <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" />
-                                            </div>
-                                            <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600">
-                                                <span className="text-[10px] font-black uppercase text-gray-500">Upcoming</span>
-                                                <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" />
-                                            </div>
+                                            <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600"> <span className="text-[10px] font-black uppercase text-gray-500">Reg Portal</span> <input type="checkbox" checked={evtRegEnabled} onChange={e => setEvtRegEnabled(e.target.checked)} className="h-5 w-5 accent-teal-500" /> </div>
+                                            <div className="flex items-center justify-between bg-gray-700 p-3 rounded-xl border border-gray-600"> <span className="text-[10px] font-black uppercase text-gray-500">Upcoming</span> <input type="checkbox" checked={evtUpcoming} onChange={e => setEvtUpcoming(e.target.checked)} className="h-5 w-5 accent-teal-500" /> </div>
                                         </div>
                                     </div>
-
-                                    <div className="md:col-span-2">
-                                        <ImageUploadField 
-                                            label="Event Image"
-                                            value={evtImg}
-                                            onChange={setEvtImg}
-                                            folder="events"
-                                        />
-                                    </div>
-                                    
+                                    <div className="md:col-span-2"> <ImageUploadField label="Event Image" value={evtImg} onChange={setEvtImg} folder="events" /> </div>
                                     <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Event Story/Mission..." className="md:col-span-2 p-3 bg-gray-700 rounded-xl text-white border border-gray-600 h-32" />
                                 </div>
                                 <div className="mt-6 flex space-x-3">
@@ -460,19 +458,13 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                             </Card>
                         </Reveal>
-
                         <div className="space-y-4">
                             {publicEvents.map((evt, idx) => (
                                 <Reveal key={evt.id} delay={idx * 50} instant={idx < 5}>
                                     <div className="group p-4 bg-gray-800 rounded-2xl border border-gray-700 flex justify-between items-center transition-all hover:border-teal-500/30 hover:shadow-teal-500/5">
                                         <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 bg-gray-900 rounded-lg overflow-hidden shadow-inner group-hover:scale-110 transition-transform">
-                                                <img src={evt.imageUrl} className="w-full h-full object-cover" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-white font-bold group-hover:text-teal-400 transition-colors">{evt.title}</h4>
-                                                <p className="text-[10px] text-gray-500 uppercase font-black">{new Date(evt.date).toLocaleDateString()} • {evt.category}</p>
-                                            </div>
+                                            <div className="w-12 h-12 bg-gray-900 rounded-lg overflow-hidden shadow-inner group-hover:scale-110 transition-transform"> <img src={evt.imageUrl} className="w-full h-full object-cover" /> </div>
+                                            <div> <h4 className="text-white font-bold group-hover:text-teal-400 transition-colors">{evt.title}</h4> <p className="text-[10px] text-gray-500 uppercase font-black">{new Date(evt.date).toLocaleDateString()} • {evt.category}</p> </div>
                                         </div>
                                         <div className="flex space-x-2">
                                             <button onClick={() => handleEditEvent(evt)} className="text-teal-400 hover:bg-teal-400/10 p-2 rounded-lg transition-all active:scale-90">Edit</button>
@@ -489,26 +481,15 @@ const AdminDashboard: React.FC = () => {
                     <Reveal instant={true}>
                         <Card title="Visitor Registrations (Active Window)">
                             <div className="space-y-4">
-                                {loading ? (
-                                    <>
-                                        <Skeleton className="h-20 w-full" />
-                                        <Skeleton className="h-20 w-full" />
-                                    </>
-                                ) : activeRegistrations.length > 0 ? activeRegistrations.map((reg, idx) => (
+                                {loading ? ( <> <Skeleton className="h-20 w-full" /> <Skeleton className="h-20 w-full" /> </> ) : activeRegistrations.length > 0 ? activeRegistrations.map((reg, idx) => (
                                     <Reveal key={reg.id} delay={idx * 50} instant={idx < 5}>
                                         <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-700 flex justify-between items-center hover:border-teal-500/30 transition-all">
                                             <div>
                                                 <h4 className="text-white font-black uppercase text-sm">{reg.name}</h4>
                                                 <p className="text-[10px] text-teal-400 font-bold uppercase tracking-widest">{reg.eventTitle} &bull; {new Date(reg.eventDate).toLocaleDateString()}</p>
-                                                <div className="mt-2 text-xs text-gray-400">
-                                                    <p>Email: {reg.email}</p>
-                                                    <p>Phone: {reg.phone}</p>
-                                                </div>
+                                                <div className="mt-2 text-xs text-gray-400"> <p>Email: {reg.email}</p> <p>Phone: {reg.phone}</p> </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-[9px] text-gray-600 font-black uppercase">Registered On</p>
-                                                <p className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</p>
-                                            </div>
+                                            <div className="text-right"> <p className="text-[9px] text-gray-600 font-black uppercase">Registered On</p> <p className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</p> </div>
                                         </div>
                                     </Reveal>
                                 )) : <p className="text-center py-12 text-gray-600 italic">No registrations found for recent/upcoming events.</p>}
@@ -544,19 +525,11 @@ const AdminDashboard: React.FC = () => {
                                 {feedbacks.map((f, idx) => (
                                     <Reveal key={f.id} delay={idx * 50} instant={idx < 5}>
                                         <div className="p-6 bg-gray-900/50 rounded-2xl border border-gray-700 hover:border-teal-500/30 transition-all">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h4 className="text-white font-bold">{f.subject}</h4>
-                                                <span className="text-[10px] text-teal-500 font-black">{f.userName}</span>
-                                            </div>
+                                            <div className="flex justify-between items-start mb-2"> <h4 className="text-white font-bold">{f.subject}</h4> <span className="text-[10px] text-teal-500 font-black">{f.userName}</span> </div>
                                             <p className="text-sm text-gray-400 italic mb-4">"{f.message}"</p>
                                             {!f.reply ? (
                                                 <div className="flex space-x-2">
-                                                    <input 
-                                                        value={replyText[f.id] || ''} 
-                                                        onChange={e => setReplyText(prev => ({ ...prev, [f.id]: e.target.value }))}
-                                                        placeholder="Write reply..." 
-                                                        className="flex-1 p-2 bg-gray-700 rounded-lg text-xs outline-none focus:ring-1 focus:ring-teal-500 transition-all"
-                                                    />
+                                                    <input value={replyText[f.id] || ''} onChange={e => setReplyText(prev => ({ ...prev, [f.id]: e.target.value }))} placeholder="Write reply..." className="flex-1 p-2 bg-gray-700 rounded-lg text-xs outline-none focus:ring-1 focus:ring-teal-500 transition-all" />
                                                     <button onClick={() => { replyToFeedback(f.id, replyText[f.id]); alert('Replied!'); }} className="px-3 py-2 bg-teal-600 rounded-lg text-xs font-bold active:scale-95 transition-all">Reply</button>
                                                 </div>
                                             ) : <div className="p-3 bg-teal-500/10 rounded-xl text-xs text-gray-300 border border-teal-500/20">Rep: {f.reply}</div>}

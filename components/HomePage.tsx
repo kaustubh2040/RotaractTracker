@@ -6,13 +6,16 @@ import Reveal from './common/Reveal';
 import { SkeletonCard } from './common/Skeleton';
 
 const HomePage: React.FC = () => {
-    const { settings, publicEvents, setCurrentPage, users, registerVisitor, loading } = useClubData();
+    const { settings, publicEvents, setCurrentPage, users, registerVisitor, loading, flagshipEvents } = useClubData();
     const [selectedEvent, setSelectedEvent] = useState<PublicEvent | null>(null);
     const [regForm, setRegForm] = useState({ name: '', email: '', phone: '' });
     const [regStatus, setRegStatus] = useState<'idle' | 'loading' | 'success'>('idle');
     
     const today = new Date();
     today.setHours(0,0,0,0);
+
+    // Active Flagship Event
+    const activeFlagship = flagshipEvents.find(f => f.isActive);
 
     // Filter upcoming (Future events only)
     const upcomingEvents = [...publicEvents]
@@ -260,6 +263,43 @@ const HomePage: React.FC = () => {
                     </div>
                 </div>
             </section>
+
+            {/* NEW: ACTIVE FLAGSHIP EVENT SECTION */}
+            {activeFlagship && (
+                <section className="py-24 bg-gradient-to-b from-gray-900 to-gray-950 border-b border-gray-800 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                        <div className="absolute -top-24 -left-24 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px]"></div>
+                    </div>
+                    <div className="container mx-auto px-6 relative z-10">
+                        <Reveal instant={true}>
+                            <div className="flex flex-col lg:flex-row items-center gap-12 max-w-6xl mx-auto bg-gray-800/40 p-8 lg:p-16 rounded-[3rem] border border-teal-500/20 shadow-2xl shadow-teal-900/10 backdrop-blur-sm">
+                                <div className="w-full lg:w-1/2 rounded-[2rem] overflow-hidden border-2 border-teal-500/30 shadow-2xl transform transition-transform hover:scale-[1.02] duration-500">
+                                    <img src={activeFlagship.flyerUrl} className="w-full h-auto object-cover" alt={activeFlagship.name} />
+                                </div>
+                                <div className="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
+                                    <span className="inline-block bg-teal-500/10 text-teal-400 border border-teal-500/30 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-2 shadow-[0_0_20px_rgba(20,184,166,0.15)] animate-pulse">
+                                        Flagship Event
+                                    </span>
+                                    <h2 className="text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-none">{activeFlagship.name}</h2>
+                                    <p className="text-gray-400 text-lg leading-relaxed font-light">{activeFlagship.description}</p>
+                                    <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                                        <div className="flex items-center text-teal-400">
+                                            <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" /></svg>
+                                            <span className="font-black uppercase tracking-widest text-sm">{activeFlagship.dateRange}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => setCurrentPage('flagship')}
+                                            className="w-full sm:w-auto px-10 py-5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-teal-900/40 transition-all hover:scale-105 active:scale-95 text-xs"
+                                        >
+                                            Explore & Register →
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Reveal>
+                    </div>
+                </section>
+            )}
 
             {/* Upcoming Impact - Auto-Filtered by Date */}
             <section className="py-24 bg-gray-800/20">

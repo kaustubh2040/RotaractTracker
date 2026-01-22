@@ -100,3 +100,26 @@ export interface MemberStats {
     totalPoints: number;
     activities: Activity[];
 }
+
+export interface FlagshipEvent {
+  id: string;
+  name: string;
+  flyerUrl: string;
+  description: string;
+  dateRange: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SubEvent {
+  id: string;
+  flagshipEventId: string;
+  name: string;
+  flyerUrl: string;
+  description: string;
+  date: string;
+  registrationFee: string;
+  googleFormUrl: string;
+  rulebookUrl: string;
+  createdAt: string;
+}

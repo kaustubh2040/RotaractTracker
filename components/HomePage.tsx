@@ -56,6 +56,13 @@ const HomePage: React.FC = () => {
         setRegForm({ name: '', email: '', phone: '' });
     };
 
+    const scrollToFlagship = () => {
+        const element = document.getElementById('flagship-section');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     if (selectedEvent) {
         const isPastEvent = new Date(selectedEvent.date) < today;
 
@@ -233,6 +240,35 @@ const HomePage: React.FC = () => {
 
     return (
         <div className="animate-fadeIn">
+            {/* NEW: FLAGSHIP ANNOUNCEMENT BAR */}
+            {activeFlagship && (
+                <div className="bg-teal-500/10 backdrop-blur-md border-b border-teal-500/20 py-3 px-6 relative z-30 transition-all duration-500">
+                    <div className="container mx-auto flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-teal-500/30 shrink-0 shadow-lg shadow-teal-500/10">
+                                <img src={activeFlagship.flyerUrl} className="w-full h-full object-cover" alt="Event Thumbnail" />
+                            </div>
+                            <div className="flex flex-col">
+                                <div className="flex items-center space-x-2">
+                                    <span className="bg-teal-500 text-gray-950 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">Live Now</span>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-tighter">{activeFlagship.name}</h3>
+                                </div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{activeFlagship.dateRange}</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={scrollToFlagship}
+                            className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl shadow-teal-900/20 active:scale-95 group flex items-center"
+                        >
+                            Explore & Register
+                            <svg className="w-3 h-3 ml-2 transform group-hover:translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Hero Section */}
             <section className="relative py-24 lg:py-40 overflow-hidden bg-gray-900 border-b border-gray-800">
                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px]"></div>
@@ -266,7 +302,7 @@ const HomePage: React.FC = () => {
 
             {/* NEW: ACTIVE FLAGSHIP EVENT SECTION */}
             {activeFlagship && (
-                <section className="py-24 bg-gradient-to-b from-gray-900 to-gray-950 border-b border-gray-800 relative overflow-hidden">
+                <section id="flagship-section" className="py-24 bg-gradient-to-b from-gray-900 to-gray-950 border-b border-gray-800 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
                         <div className="absolute -top-24 -left-24 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px]"></div>
                     </div>

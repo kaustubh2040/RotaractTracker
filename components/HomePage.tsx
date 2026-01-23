@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useClubData } from '../hooks/useClubData';
 import { PublicEvent, User } from '../types';
 import { BOD_POSITIONS } from '../constants';
@@ -10,9 +10,16 @@ const HomePage: React.FC = () => {
     const [selectedEvent, setSelectedEvent] = useState<PublicEvent | null>(null);
     const [regForm, setRegForm] = useState({ name: '', email: '', phone: '' });
     const [regStatus, setRegStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+    const [isSpotlightVisible, setIsSpotlightVisible] = useState(false);
     
     const today = new Date();
     today.setHours(0,0,0,0);
+
+    // Initial load animation trigger
+    useEffect(() => {
+        const timer = setTimeout(() => setIsSpotlightVisible(true), 150);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Active Flagship Event
     const activeFlagship = flagshipEvents.find(f => f.isActive);
@@ -240,31 +247,45 @@ const HomePage: React.FC = () => {
 
     return (
         <div className="animate-fadeIn">
-            {/* NEW: FLAGSHIP ANNOUNCEMENT BAR */}
+            {/* NEW: FLAGSHIP SPOTLIGHT ANIMATION (LAUNCH MOMENT) */}
             {activeFlagship && (
-                <div className="bg-teal-500/10 backdrop-blur-md border-b border-teal-500/20 py-3 px-6 relative z-30 transition-all duration-500">
-                    <div className="container mx-auto flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-teal-500/30 shrink-0 shadow-lg shadow-teal-500/10">
-                                <img src={activeFlagship.flyerUrl} className="w-full h-full object-cover" alt="Event Thumbnail" />
-                            </div>
-                            <div className="flex flex-col">
-                                <div className="flex items-center space-x-2">
-                                    <span className="bg-teal-500 text-gray-950 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">Live Now</span>
-                                    <h3 className="text-sm font-black text-white uppercase tracking-tighter">{activeFlagship.name}</h3>
+                <div className="px-4 pt-8 pb-4 relative z-30">
+                    <div className="container mx-auto flex justify-center">
+                        <div 
+                            className={`w-full max-w-4xl transition-all duration-[1200ms] cubic-bezier(0.16, 1, 0.3, 1) transform ${
+                                isSpotlightVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-8 scale-95'
+                            }`}
+                        >
+                            <div className="bg-gray-800/40 backdrop-blur-xl border border-teal-500/20 py-4 px-6 sm:px-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-teal-500/40 transition-colors">
+                                <div className="flex items-center space-x-6">
+                                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-4 border-teal-500/20 shrink-0 shadow-2xl transition-transform hover:scale-110 duration-500">
+                                        <img src={activeFlagship.flyerUrl} className="w-full h-full object-cover" alt="Event Spotlight" />
+                                    </div>
+                                    <div className="flex flex-col text-center sm:text-left">
+                                        <div className="flex items-center justify-center sm:justify-start space-x-3 mb-1">
+                                            <span className="bg-teal-500 text-gray-950 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(20,184,166,0.3)] animate-pulse">
+                                                Live Now
+                                            </span>
+                                            <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tighter leading-none">
+                                                {activeFlagship.name}
+                                            </h3>
+                                        </div>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] ml-1">
+                                            {activeFlagship.dateRange}
+                                        </p>
+                                    </div>
                                 </div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{activeFlagship.dateRange}</p>
+                                <button 
+                                    onClick={scrollToFlagship}
+                                    className="w-full sm:w-auto px-10 py-4 bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-teal-900/30 active:scale-95 group flex items-center justify-center hover:shadow-teal-500/20"
+                                >
+                                    Explore & Register
+                                    <svg className="w-4 h-4 ml-3 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-                        <button 
-                            onClick={scrollToFlagship}
-                            className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl shadow-teal-900/20 active:scale-95 group flex items-center"
-                        >
-                            Explore & Register
-                            <svg className="w-3 h-3 ml-2 transform group-hover:translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                            </svg>
-                        </button>
                     </div>
                 </div>
             )}
@@ -300,7 +321,7 @@ const HomePage: React.FC = () => {
                 </div>
             </section>
 
-            {/* NEW: ACTIVE FLAGSHIP EVENT SECTION */}
+            {/* ACTIVE FLAGSHIP EVENT SECTION */}
             {activeFlagship && (
                 <section id="flagship-section" className="py-24 bg-gradient-to-b from-gray-900 to-gray-950 border-b border-gray-800 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">

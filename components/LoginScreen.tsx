@@ -53,7 +53,7 @@ const LoginScreen: React.FC = () => {
                             <option value="">Choose a profile...</option>
                             {users.map(user => (
                                 <option key={user.id} value={user.id}>
-                                    {user.name} {user.role === 'admin' ? '(President)' : ''}
+                                    {user.name}
                                 </option>
                             ))}
                         </select>

@@ -16,10 +16,12 @@ const AdminDashboard: React.FC = () => {
         publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations,
         settings, updateSettings, aboutContent, updateAboutContent, updateMember, loading,
         flagshipEvents, addFlagshipEvent, updateFlagshipEvent, deleteFlagshipEvent,
-        subEvents, addSubEvent, updateSubEvent, deleteSubEvent
+        subEvents, addSubEvent, updateSubEvent, deleteSubEvent, users
     } = useClubData();
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings' | 'profile' | 'flagship'>('overview');
+    const isOwner = currentUser?.name?.trim().toLowerCase() === 'kaustubh patil';
+    
+    const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'members' | 'communications' | 'feedback' | 'events' | 'registrations' | 'settings' | 'profile' | 'flagship' | 'app-management'>('overview');
     const [msg, setMsg] = useState('');
     const [targetUser, setTargetUser] = useState('');
     const [targetMsg, setTargetMsg] = useState('');
@@ -193,6 +195,7 @@ const AdminDashboard: React.FC = () => {
         { id: 'feedback', label: 'Feedback', icon: <path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /> },
         { id: 'communications', label: 'Communications', icon: <path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /> },
         { id: 'settings', label: 'App Settings', icon: <><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></> },
+        ...(isOwner ? [{ id: 'app-management', label: 'App Management', icon: <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> }] : []),
         { id: 'profile', label: 'My Identity', icon: <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> },
     ];
 
@@ -518,6 +521,200 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     </Reveal>
                 )}
+
+                {activeTab === 'app-management' && isOwner && (
+                    <Reveal instant={true}>
+                        <div className="space-y-6 animate-fadeIn">
+                            {/* Governance Header */}
+                            <div className="p-6 bg-gradient-to-r from-teal-900/30 via-gray-800/40 to-teal-900/30 rounded-3xl border border-teal-500/15">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-2xl font-black text-white tracking-tight uppercase">System Governance</h2>
+                                        <p className="text-xs text-teal-400 font-bold uppercase tracking-wider mt-1">Application Control & Leadership Assignments</p>
+                                    </div>
+                                    <span className="px-4 py-1.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                        Owner Active
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-4 leading-relaxed max-w-3xl">
+                                    Welcome, Application Owner. This section manages system-level authority, monitors active roles, and outlines access configurations. Permissions for club administrators are determined automatically based on active leadership positions, ensuring seamless handovers between Rotary Years.
+                                </p>
+                            </div>
+
+                            {/* Active Leadership & Governance Map */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Application Owner */}
+                                <Card title="Application Owner" className="border-t-4 border-amber-500">
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black">
+                                            AO
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white font-bold">Kaustubh Patil</h4>
+                                            <p className="text-[10px] text-amber-400 font-black uppercase tracking-wider">Permanent Authority</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                                        Permanent system anchor. Retains non-transferable owner status, system recovery tools, and access management. Permanent status is not bound to club positions.
+                                    </p>
+                                </Card>
+
+                                {/* Current President */}
+                                <Card title="Current President" className="border-t-4 border-teal-500">
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 font-black">
+                                            CP
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white font-bold">
+                                                {users.find(u => (u.positions || []).includes('President'))?.name || 'Unassigned'}
+                                            </h4>
+                                            <p className="text-[10px] text-teal-400 font-black uppercase tracking-wider">Operational Administrator</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                                        Granted operational administrator privileges dynamically. Access remains active while holding the 'President' position.
+                                    </p>
+                                </Card>
+
+                                {/* Current Secretary */}
+                                <Card title="Current Secretary" className="border-t-4 border-teal-500">
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 font-black">
+                                            CS
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white font-bold">
+                                                {users.find(u => (u.positions || []).includes('Secretary'))?.name || 'Unassigned'}
+                                            </h4>
+                                            <p className="text-[10px] text-teal-400 font-black uppercase tracking-wider">Operational Administrator</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                                        Granted operational administrator privileges dynamically. Access remains active while holding the 'Secretary' position.
+                                    </p>
+                                </Card>
+                            </div>
+
+                            {/* Active Operational Admins Grid */}
+                            <Card title="Operational Administrators">
+                                <p className="text-xs text-gray-400 mb-4">
+                                    The following users currently hold administrative access based on their positions or legacy admin roles:
+                                </p>
+                                <div className="space-y-3">
+                                    {users.filter(u => 
+                                        u.role === 'admin' || 
+                                        (u.positions || []).includes('President') || 
+                                        (u.positions || []).includes('Secretary')
+                                    ).map(admin => (
+                                        <div key={admin.id} className="p-4 bg-gray-900/50 rounded-2xl border border-gray-800 flex justify-between items-center hover:border-teal-500/20 transition-all">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center overflow-hidden">
+                                                    {admin.photoUrl ? <img src={admin.photoUrl} alt={admin.name} className="w-full h-full object-cover" /> : <span className="text-xs text-gray-400 font-bold">{admin.name[0]}</span>}
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-white font-bold text-sm">{admin.name}</h4>
+                                                    <div className="flex gap-1.5 mt-1">
+                                                        {admin.positions?.map(p => (
+                                                            <span key={p} className="text-[8px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full uppercase font-black">{p}</span>
+                                                        ))}
+                                                        {admin.role === 'admin' && (
+                                                            <span className="text-[8px] bg-gray-800 text-gray-400 border border-gray-700 px-2 py-0.5 rounded-full uppercase font-black">Legacy Admin</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[9px] text-teal-400 font-black uppercase tracking-wider bg-teal-500/5 border border-teal-500/10 px-3 py-1 rounded-md">
+                                                    Operational Admin
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+
+                            {/* Permission overview and Matrix */}
+                            <Card title="System Authorization Model Matrix">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs text-gray-300">
+                                        <thead className="text-[10px] uppercase font-black text-gray-500 border-b border-gray-800">
+                                            <tr>
+                                                <th className="p-4">System Module / Action</th>
+                                                <th className="p-4 text-center">Owner</th>
+                                                <th className="p-4 text-center">President / Secretary</th>
+                                                <th className="p-4 text-center">Club Members</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-800">
+                                            <tr>
+                                                <td className="p-4 font-bold text-white">System Governance & Owner Control</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-rose-500 font-black">✗ Restricted</td>
+                                                <td className="p-4 text-center text-rose-500 font-black">✗ Restricted</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="p-4 font-bold text-white">Application Configuration & Branding Settings</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-rose-500 font-black">✗ Restricted</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="p-4 font-bold text-white">User Hub / Roster Management</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full (Excl. Owner)</td>
+                                                <td className="p-4 text-center text-rose-500 font-black">✗ Restricted</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="p-4 font-bold text-white">Flagship Events & Subevent Management</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-rose-500 font-black">✗ Restricted</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="p-4 font-bold text-white">Manage Public Events & Announcements</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-rose-500 font-black">✗ Restricted</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="p-4 font-bold text-white">Submit Activities & Support Tickets</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                                <td className="p-4 text-center text-emerald-400 font-black">✓ Full</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Card>
+
+                            {/* Advanced System Commands */}
+                            <Card title="Advanced Control Deck (Security Locked)">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-5 bg-gray-900/50 rounded-2xl border border-gray-800">
+                                        <h4 className="text-sm font-black text-amber-400 uppercase tracking-wide mb-1">Transfer Ownership</h4>
+                                        <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                                            Safely relocate the permanent Application Owner credentials to another senior system trustee.
+                                        </p>
+                                        <button onClick={() => alert('Security Verification Required: Please contact the system hosting provider to execute manual owner transfers.')} className="px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-gray-950 font-bold uppercase text-[10px] tracking-wider rounded-xl transition-all">
+                                            Transfer Key
+                                        </button>
+                                    </div>
+                                    <div className="p-5 bg-gray-900/50 rounded-2xl border border-gray-800">
+                                        <h4 className="text-sm font-black text-rose-400 uppercase tracking-wide mb-1">Emergency System Recovery</h4>
+                                        <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                                            Freeze all standard operations, override current leadership tokens, or restore emergency configuration parameters.
+                                        </p>
+                                        <button onClick={() => alert('Emergency Recovery Mode is currently in Standby.')} className="px-4 py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white font-bold uppercase text-[10px] tracking-wider rounded-xl transition-all">
+                                            Initiate Recovery
+                                        </button>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </Reveal>
+                )}
+
                 {activeTab === 'feedback' && (
                     <Reveal instant={true}>
                         <Card title="Feedbacks & Queries">

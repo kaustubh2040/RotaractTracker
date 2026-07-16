@@ -45,7 +45,11 @@ const AppContent: React.FC = () => {
                 return <LeaderboardPage />;
             case 'dashboard':
                 if (!currentUser) return <LoginScreen />;
-                return currentUser.role === 'admin' ? <AdminDashboard /> : <MemberDashboard />;
+                const isEffectiveAdmin = currentUser.role === 'admin' || 
+                    currentUser.name?.trim().toLowerCase() === 'kaustubh patil' || 
+                    currentUser.positions?.includes('President') || 
+                    currentUser.positions?.includes('Secretary');
+                return isEffectiveAdmin ? <AdminDashboard /> : <MemberDashboard />;
             case 'home':
             default:
                 return <HomePage />;

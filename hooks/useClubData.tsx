@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
-import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration, FlagshipEvent, SubEvent } from '../types';
+import type { User, Activity, MemberStats, Announcement, Notification, AppSettings, PublicEvent, AboutContent, Feedback, EventRegistration, FlagshipEvent, SubEvent, SupportTicket } from '../types';
 import { ActivityStatus } from '../types';
 import { USERS, INITIAL_ACTIVITIES, BOD_POSITIONS } from '../constants';
 import { supabase, isSupabaseConfigured, uploadFile } from '../services/supabase';
@@ -20,8 +20,9 @@ interface ClubDataContextType {
     registrations: EventRegistration[];
     flagshipEvents: FlagshipEvent[];
     subEvents: SubEvent[];
-    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship';
-    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship') => void;
+    supportTickets: SupportTicket[];
+    currentPage: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship' | 'help';
+    setCurrentPage: (page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship' | 'help') => void;
     updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
     updateAboutContent: (content: AboutContent) => Promise<void>;
     addPublicEvent: (event: Omit<PublicEvent, 'id'>) => Promise<void>;
@@ -36,6 +37,8 @@ interface ClubDataContextType {
     sendNotification: (userId: string, text: string) => Promise<void>;
     addFeedback: (subject: string, message: string) => Promise<void>;
     replyToFeedback: (feedbackId: string, reply: string) => Promise<void>;
+    addSupportTicket: (ticket: Omit<SupportTicket, 'id' | 'createdAt' | 'status'>) => Promise<void>;
+    updateSupportTicketStatus: (ticketId: string, status: 'New' | 'In Progress' | 'Resolved') => Promise<void>;
     registerVisitor: (reg: Omit<EventRegistration, 'id' | 'createdAt'>) => Promise<void>;
     uploadImage: (file: File, folder: 'events' | 'profiles' | 'logos' | 'flagship') => Promise<string | null>;
     addFlagshipEvent: (event: Omit<FlagshipEvent, 'id' | 'createdAt'>) => Promise<void>;
@@ -72,14 +75,15 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
     const [flagshipEvents, setFlagshipEvents] = useState<FlagshipEvent[]>([]);
     const [subEvents, setSubEvents] = useState<SubEvent[]>([]);
+    const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
     const [settings, setSettings] = useState<AppSettings>({ clubLogoUrl: '', appName: 'ACTRA', appSubtitle: 'BY ROTARACT CLUB OF RSCOE', aboutGroupImageUrl: '' });
     const [aboutContent, setAboutContent] = useState<AboutContent>(DEFAULT_ABOUT);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentPage, _setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship'>('home');
+    const [currentPage, _setCurrentPage] = useState<'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship' | 'help'>('home');
     const [loading, setLoading] = useState(true);
     const [dbStatus, setDbStatus] = useState<'connected' | 'local' | 'error'>('local');
 
-    const setCurrentPage = useCallback((page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship') => {
+    const setCurrentPage = useCallback((page: 'home' | 'login' | 'dashboard' | 'about' | 'leaderboard' | 'bod-all' | 'contact' | 'flagship' | 'help') => {
         _setCurrentPage(page);
         if (window.history.state?.page !== page) {
             window.history.pushState({ page }, "", "");
@@ -168,6 +172,27 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                             aboutGroupImageUrl: sMap.about_group_image_url || prev.aboutGroupImageUrl
                         }));
                         if (sMap.about_content) try { setAboutContent(JSON.parse(sMap.about_content)); } catch (e) {}
+                    }
+
+                    try {
+                        const { data: ticketData } = await supabase.from('support_tickets').select('*').order('created_at', { ascending: false });
+                        if (ticketData) {
+                            setSupportTickets(ticketData.map(t => ({
+                                id: t.id,
+                                name: t.name,
+                                email: t.email,
+                                subject: t.subject,
+                                message: t.message,
+                                status: t.status as 'New' | 'In Progress' | 'Resolved',
+                                createdAt: t.created_at
+                            })));
+                        }
+                    } catch (ticketError) {
+                        console.warn("Support tickets table not loaded yet, or not accessible:", ticketError);
+                        const localTickets = localStorage.getItem('actra_support_tickets_fallback');
+                        if (localTickets) {
+                            try { setSupportTickets(JSON.parse(localTickets)); } catch (_) {}
+                        }
                     }
 
                     setDbStatus('connected');
@@ -386,6 +411,56 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setFeedbacks(prev => prev.map(f => f.id === feedbackId ? { ...f, reply } : f));
     };
 
+    const addSupportTicket = async (ticket: Omit<SupportTicket, 'id' | 'createdAt' | 'status'>) => {
+        const newTicket: SupportTicket = {
+            id: `sup${Date.now()}`,
+            name: ticket.name,
+            email: ticket.email,
+            subject: ticket.subject,
+            message: ticket.message,
+            status: 'New',
+            createdAt: new Date().toISOString()
+        };
+        
+        if (dbStatus === 'connected' && supabase) {
+            try {
+                await supabase.from('support_tickets').insert([{
+                    id: newTicket.id,
+                    name: newTicket.name,
+                    email: newTicket.email,
+                    subject: newTicket.subject,
+                    message: newTicket.message,
+                    status: newTicket.status,
+                    created_at: newTicket.createdAt
+                }]);
+            } catch (err) {
+                console.error("Failed to insert into supabase support_tickets:", err);
+            }
+        }
+        
+        setSupportTickets(prev => {
+            const updated = [newTicket, ...prev];
+            localStorage.setItem('actra_support_tickets_fallback', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    const updateSupportTicketStatus = async (ticketId: string, status: 'New' | 'In Progress' | 'Resolved') => {
+        if (dbStatus === 'connected' && supabase) {
+            try {
+                await supabase.from('support_tickets').update({ status }).eq('id', ticketId);
+            } catch (err) {
+                console.error("Failed to update status in supabase support_tickets:", err);
+            }
+        }
+        
+        setSupportTickets(prev => {
+            const updated = prev.map(t => t.id === ticketId ? { ...t, status } : t);
+            localStorage.setItem('actra_support_tickets_fallback', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
     const registerVisitor = async (reg: Omit<EventRegistration, 'id' | 'createdAt'>) => {
         const newReg = { ...reg, id: `reg${Date.now()}`, createdAt: new Date().toISOString() };
         if (dbStatus === 'connected' && supabase) await supabase.from('event_registrations').insert([{ id: newReg.id, event_id: newReg.eventId, event_title: newReg.eventTitle, event_date: newReg.eventDate, name: newReg.name, email: newReg.email, phone: newReg.phone, created_at: newReg.createdAt }]);
@@ -404,10 +479,10 @@ export const ClubDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (
         <ClubDataContext.Provider value={{
             currentUser, login, logout, users, members: users.filter(u => u.role === 'member'), activities, 
-            announcements, notifications, feedbacks, settings, aboutContent, publicEvents, registrations, flagshipEvents, subEvents, currentPage, setCurrentPage,
+            announcements, notifications, feedbacks, settings, aboutContent, publicEvents, registrations, flagshipEvents, subEvents, supportTickets, currentPage, setCurrentPage,
             updateSettings, updateAboutContent, addPublicEvent, updatePublicEvent, deletePublicEvent,
             addActivity, updateActivityStatus, updateMember, addMember, deleteMember,
-            addAnnouncement, sendNotification, addFeedback, replyToFeedback, registerVisitor, uploadImage,
+            addAnnouncement, sendNotification, addFeedback, replyToFeedback, addSupportTicket, updateSupportTicketStatus, registerVisitor, uploadImage,
             addFlagshipEvent, updateFlagshipEvent, deleteFlagshipEvent, addSubEvent, updateSubEvent, deleteSubEvent,
             memberStats, loading, dbStatus
         }}>

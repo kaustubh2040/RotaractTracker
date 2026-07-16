@@ -9,6 +9,7 @@ import MemberManagement from './MemberManagement';
 import ImageUploadField from './common/ImageUploadField';
 import Reveal from './common/Reveal';
 import { Skeleton } from './common/Skeleton';
+import SupportInbox from './SupportInbox';
 
 const AdminDashboard: React.FC = () => {
     const { 
@@ -16,7 +17,8 @@ const AdminDashboard: React.FC = () => {
         publicEvents, addPublicEvent, updatePublicEvent, deletePublicEvent, feedbacks, replyToFeedback, registrations,
         settings, updateSettings, aboutContent, updateAboutContent, updateMember, loading,
         flagshipEvents, addFlagshipEvent, updateFlagshipEvent, deleteFlagshipEvent,
-        subEvents, addSubEvent, updateSubEvent, deleteSubEvent, users
+        subEvents, addSubEvent, updateSubEvent, deleteSubEvent, users,
+        supportTickets, updateSupportTicketStatus
     } = useClubData();
     
     const isOwner = currentUser?.name?.trim().toLowerCase() === 'kaustubh patil';
@@ -540,6 +542,12 @@ const AdminDashboard: React.FC = () => {
                                     Welcome, Application Owner. This section manages system-level authority, monitors active roles, and outlines access configurations. Permissions for club administrators are determined automatically based on active leadership positions, ensuring seamless handovers between Rotary Years.
                                 </p>
                             </div>
+
+                            {/* Support Inbox for Application Administrator (Owner) */}
+                            <SupportInbox 
+                                tickets={supportTickets || []} 
+                                updateStatus={updateSupportTicketStatus} 
+                            />
 
                             {/* Active Leadership & Governance Map */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

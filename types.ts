@@ -123,3 +123,13 @@ export interface SubEvent {
   rulebookUrl: string;
   createdAt: string;
 }
+
+export interface SupportTicket {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'New' | 'In Progress' | 'Resolved';
+  createdAt: string;
+}

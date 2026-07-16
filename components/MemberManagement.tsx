@@ -19,10 +19,10 @@ const AddMemberForm: React.FC = () => {
             return;
         }
 
-        const isOwnerName = name.trim().toLowerCase() === 'kaustubh patil';
-        const isCurrentOwner = currentUser?.name?.trim().toLowerCase() === 'kaustubh patil';
-        if (isOwnerName && !isCurrentOwner) {
-            setError("Permission Denied: Only the Application Owner can configure Owner records.");
+        const isCurrentAppAdmin = currentUser?.id === 'owner-permanent-anchor' || currentUser?.positions?.includes('Application Administrator');
+        const isTargetAppAdmin = name.trim().toLowerCase() === 'kaustubh patil';
+        if (isTargetAppAdmin && !isCurrentAppAdmin) {
+            setError("Permission Denied: Only the Application Administrator can configure Application Administrator records.");
             return;
         }
 
@@ -100,10 +100,10 @@ const MemberManagement: React.FC = () => {
     const handleSave = (memberId: string) => {
         if (!formState.name.trim()) return alert("Name is required.");
 
-        const isOwnerName = formState.name.trim().toLowerCase() === 'kaustubh patil';
-        const isCurrentOwner = currentUser?.name?.trim().toLowerCase() === 'kaustubh patil';
-        if (isOwnerName && !isCurrentOwner) {
-            return alert("Permission Denied: Only the Application Owner can configure Owner records.");
+        const isCurrentAppAdmin = currentUser?.id === 'owner-permanent-anchor' || currentUser?.positions?.includes('Application Administrator');
+        const isTargetAppAdmin = memberId === 'owner-permanent-anchor' || formState.name.trim().toLowerCase() === 'kaustubh patil' || formState.positions?.includes('Application Administrator');
+        if (isTargetAppAdmin && !isCurrentAppAdmin) {
+            return alert("Permission Denied: Only the Application Administrator can configure Application Administrator records.");
         }
 
         updateMember(memberId, formState);
@@ -188,22 +188,18 @@ const MemberManagement: React.FC = () => {
                                     </div>
                                     <div className="flex space-x-2 items-center">
                                         {(() => {
-                                            const isOwner = currentUser?.name?.trim().toLowerCase() === 'kaustubh patil';
-                                            const isTargetOwner = member.name?.trim().toLowerCase() === 'kaustubh patil';
+                                            const isTargetAppAdmin = member.id === 'owner-permanent-anchor' || member.positions?.includes('Application Administrator');
+                                            const isCurrentAppAdmin = currentUser?.id === 'owner-permanent-anchor' || currentUser?.positions?.includes('Application Administrator');
                                             
-                                            if (isTargetOwner && !isOwner) {
-                                                return (
-                                                    <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full font-black uppercase tracking-widest flex items-center">
-                                                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                                        System Lock
-                                                    </span>
-                                                );
+                                            if (isTargetAppAdmin && !isCurrentAppAdmin) {
+                                                // If viewed by non-Application Administrator, hide all controls completely.
+                                                return null;
                                             }
                                             
                                             return (
                                                 <>
                                                     <button onClick={() => handleEdit(member)} className="text-teal-400 p-2 hover:bg-teal-400/10 rounded-lg active:scale-90 transition-all">Edit</button>
-                                                    {member.id !== currentUser?.id && member.role !== 'admin' && !isTargetOwner && (
+                                                    {member.id !== currentUser?.id && member.role !== 'admin' && !isTargetAppAdmin && (
                                                         <button onClick={() => handleDelete(member)} className="text-rose-500 p-2 hover:bg-rose-500/10 rounded-lg active:scale-90 transition-all">Delete</button>
                                                     )}
                                                 </>
